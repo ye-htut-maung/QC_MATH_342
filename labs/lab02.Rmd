@@ -95,24 +95,46 @@ fake_first_names = c(
 )
 
 #TO-DO
+
+df = data.frame (
+  col1 = rnorm(100, mean = 17, sd = sqrt(38)),
+  col2 = runif(100, min = -10, max = 10),
+  col3 = rpois(100, lambda = 6),
+  col4 = rexp(100, rate = 9),
+  col5 = rbinom(100, size = 20, prob = 0.12),
+  col6 = as.integer(1:100 %in% sample(100, size = 100 * 0.24, replace = FALSE))
+  
+)
+
+rownames(df) = fake_first_names
+
+df
+
 ```
 
 * Create a data frame of the same data as above except make the binary variable a factor "DOMESTIC" vs "FOREIGN" for 0 and 1 respectively. Use RStudio's `View` function to ensure this worked as desired.
 
 ```{r}
 #TO-DO
+df$col6 = factor(ifelse(df$col6==1, "FOREIGN", "DOMESTIC"))
+
+View(df)
 ```
 
 * Print out a table of the binary variable. Then print out the proportions of "DOMESTIC" vs "FOREIGN".
 
 ```{r}
 #TO-DO
+table(df$col6)
+
+prop.table(table(df$col6))
 ```
 
 Print out a summary of the whole dataframe.
 
 ```{r}
 #TO-DO
+summary(df)
 ```
 
 
@@ -188,6 +210,7 @@ X
 Xy = iris
 pacman::p_load(skimr)
 skim(Xy)
+
 ```
 
 TO-DO: describe this data
@@ -224,14 +247,39 @@ mode(x_example)
 
 * Fit a threshold model to `y` using the feature `Sepal.Length`. Write your own code to do this. What is the estimated value of the threshold parameter? Save the threshold value as `threshold`. 
 
+
+
 ```{r}
 #TO-DO
+n = nrow(Xy)
+num_errors_by_parameter = matrix(NA, nrow = n, ncol = 2)
+colnames(num_errors_by_parameter) = c("threshold_param", "num_errors")
+
+for (i in 1 : n){
+  currentThreshold = Xy$Sepal.Length[i]
+  num_errors = sum((Xy$Sepal.Length >= currentThreshold) != y)
+  num_errors_by_parameter[i, ] = c(currentThreshold, num_errors)
+}
+num_errors_by_parameter
+
+#look at all thresholds in order
+num_errors_by_parameter[order(num_errors_by_parameter[, "num_errors"]), ]
+
+#now grab the smallest num errors
+best_row = order(num_errors_by_parameter[, "num_errors"])[1]
+threshold = c(num_errors_by_parameter[best_row, "threshold_param"], use.names = FALSE)
+threshold
 ```
 
 What is the total number of errors this model makes?
 
 ```{r}
 #TO-DO
+totalErrors = sum(ifelse(Xy$Sepal.Length >= threshold, 1, 0) != y)
+totalErrors
+
+
+
 ```
 
 Does the threshold model's performance make sense given the following summaries:
@@ -243,12 +291,25 @@ summary(iris[iris$Species == "versicolor", "Sepal.Length"])
 ```
 
 TO-DO: Write your answer here in English.
+It makes sense because the mean and median of versicolor is higher than threshold which is 5.5 and 1st quadrant is around 5.5. Also setosa 3rd quadrant is around 5.2 and it is below 5.5.
+
 
 Create the function `g` explicitly that can predict `y` from `x` being a new `Sepal.Length`.
 
 ```{r}
 g = function(x){
   #TO-DO
+  if(x >= threshold){
+    return ("Versicolor")
+  } else{
+    return ("Setosa")
+  }
+
 }
+
+
+sepalLengthTest = sample(Xy$Sepal.Length, size = 1)
+sepalLengthTest
+g(sepalLengthTest)
 ```
 
