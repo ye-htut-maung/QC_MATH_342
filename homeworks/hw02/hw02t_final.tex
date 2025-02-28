@@ -526,6 +526,141 @@ No. Two variables cannot be correlated but not associated because correlation is
 
 \hardsubproblem{Derive $\partialop{\c}{\c^\top A \c}$ where $\c \in \reals^n$ and $A \in \reals^{n \times n}$ but \textit{not} symmetric. Get as far as you can.}\spc{8}
 
+\[
+\mathbf{c}^\top A \mathbf{c} =
+\begin{bmatrix}
+c_1 & \cdots & c_n
+\end{bmatrix}
+\begin{bmatrix}
+a_{11} & \cdots & a_{1n} \\
+\vdots & \ddots & \vdots \\
+a_{n1} & \cdots & a_{nn}
+\end{bmatrix}
+\begin{bmatrix}
+c_1 \\
+\vdots \\
+c_n
+\end{bmatrix}
+\]
+
+\[
+=
+\begin{bmatrix}
+(a_{11}c_1 + \cdots + a_{n1}c_n) & \cdots & (a_{1n}c_1 + \cdots + a_{nn}c_n)
+\end{bmatrix}
+\begin{bmatrix}
+c_1 \\
+\vdots \\
+c_n
+\end{bmatrix}
+\]
+
+\[
+=
+\begin{bmatrix}
+\sum\limits_{i=1}^{n} a_{i1} c_i & \cdots & \sum\limits_{i=1}^{n} a_{in} c_i
+\end{bmatrix}
+\begin{bmatrix}
+c_1 \\
+\vdots \\
+c_n
+\end{bmatrix}
+\]
+
+\[
+=
+c_1 \sum\limits_{i=1}^{n} a_{i1} c_i + \cdots + c_n \sum\limits_{i=1}^{n} a_{in} c_i
+\]
+
+\[
+=
+\sum\limits_{j=1}^{n} c_j \sum\limits_{i=1}^{n} a_{ij} c_i
+\]
+
+\[
+=
+\sum\limits_{j=1}^{n} \sum\limits_{i=1}^{n} a_{ij} c_i c_j
+\]
+
+\[
+\frac{\partial \mathbf{c}^\top A \mathbf{c}}{\partial \mathbf{c}} =
+\begin{bmatrix}
+\frac{\partial \mathbf{c}^\top A \mathbf{c}}{\partial c_1} \\
+\vdots \\
+\frac{\partial \mathbf{c}^\top A \mathbf{c}}{\partial c_n}
+\end{bmatrix}
+\]
+
+Consider the \( k^{th} \) row in the above vector:
+
+\[
+\frac{\partial \mathbf{c}^\top A \mathbf{c}}{\partial c_k}
+= \frac{\partial}{\partial c_k} \left( \sum\limits_{j=1}^{n} \sum\limits_{i=1}^{n} a_{ij} c_i c_j \right)
+\]
+
+\[
+= \frac{\partial}{\partial c_k} \left( c_1 \sum\limits_{i=1}^{n} a_{i1} c_i + \cdots + c_k \sum\limits_{i=1}^{n} a_{ik} c_i + c_k a_{kk} + \cdots + c_n \sum\limits_{i=1}^{n} a_{in} c_i \right)
+\]
+
+\[
+= c_1 a_{k1} + \cdots + \left( \sum\limits_{i=1}^{n} a_{ik} c_i + c_k a_{kk} \right) + \cdots + c_n a_{kn}
+\]
+
+\[
+= \sum\limits_{j=1}^{n} a_{kj} c_j + \sum\limits_{i=1}^{n} a_{ik} c_i
+\]
+
+\[
+= (\text{k}^{th} \text{ row of } A) \mathbf{c} + (\text{transpose of } \text{k}^{th} \text{ column of } A) \mathbf{c}
+\]
+
+\[
+= \left[ (\text{k}^{th} \text{ row of } A) + (\text{transpose of } \text{k}^{th} \text{ column of } A) \right] \mathbf{c}
+\]
+
+Therefore,
+
+\[
+\frac{\partial \mathbf{c}^\top A \mathbf{c}}{\partial \mathbf{c}} =
+\begin{bmatrix}
+(\text{1st row of } A) + (\text{transpose of 1st column of } A) \mathbf{c} \\
+\vdots \\
+(\text{n}^{th} \text{ row of } A) + (\text{transpose of } n^{th} \text{ column of } A) \mathbf{c}
+\end{bmatrix}
+\]
+
+\[
+=
+\begin{bmatrix}
+(\text{1st row of } A) + (\text{transpose of 1st column of } A) \\
+\vdots \\
+(\text{n}^{th} \text{ row of } A) + (\text{transpose of } n^{th} \text{ column of } A)
+\end{bmatrix} \mathbf{c}
+\]
+
+\[
+=
+\left( 
+\begin{bmatrix}
+\text{1st row of } A \\
+\vdots \\
+\text{n}^{th} \text{ row of } A
+\end{bmatrix} 
++ 
+\begin{bmatrix}
+\text{transpose of 1st column of } A \\
+\vdots \\
+\text{transpose of } n^{th} \text{ column of } A
+\end{bmatrix} 
+\right) \mathbf{c}
+\]
+
+\[
+=
+(A + A^\top) \mathbf{c}
+\]
+
+
 \easysubproblem{Given matrix $X \in \reals^{n \times (p+1)}$, full rank and first column consisting of the $\onevec_n$ vector, rederive the least squares solution $\b$ (the vector of coefficients in the linear model shipped in the prediction function $g$). No need to rederive the facts about vector derivatives.}\spc{10}
 
 \begin{figure}[H]
@@ -544,13 +679,67 @@ No. Two variables cannot be correlated but not associated because correlation is
     \label{fig:enter-label}
 \end{figure}
 
+
+
 \easysubproblem{If $X$ is rank deficient, how can you solve for $\b$? Explain in English.} \spc{2}
 
 If $X$ is rank deficient which means it has linearly dependent columns or duplicate features, we cannot find the inverse since it is not full rank and it is not invertible. So, we need to drop the duplicate feature or linearly dependent columns to be able to find the inverse.
 
 \hardsubproblem{Prove $\rank{X} =\rank{X^\top X}$.}\spc{9}
 
+To prove, 
+\[
+\text{rank} (X^T X) = \text{rank} (X)
+\]
+
+Let \( \vec{v} \in \text{Nullsp}(X^T X) \Rightarrow X^T X \vec{v} = \vec{0}_{p+1} \)
+
+\[
+\Rightarrow \vec{v}^T X^T X \vec{v} = \vec{v}^T \vec{0}_{p+1} = 0
+\]
+
+\[
+\Rightarrow (X \vec{v})^T (X \vec{v}) = 0 \Rightarrow X \vec{v} = \vec{0}_n \Rightarrow \vec{v} \in \text{Nullsp}(X)
+\]
+
+Let \( \vec{v} \in \text{Nullsp}(X) \Rightarrow X \vec{v} = \vec{0}_n \Rightarrow X^T X \vec{v} = X^T \vec{0}_n = \vec{0}_{p+1} \)
+
+\[
+\Rightarrow \vec{v} \in \text{Nullsp}(X^T X)
+\]
+
+\[
+\text{Nullsp}(X^T X) = \text{Nullsp}(X) \Rightarrow \text{Nullity} (X^T X) = \text{Nullity} (X)
+\]
+
+By the rank-nullity theorem:
+
+\begin{equation}
+\text{Nullity} (X^T X) + \text{rank} (X^T X) = p+1
+\end{equation}
+
+\begin{equation}
+\text{Nullity} (X) + \text{rank} (X) = p+1
+\end{equation}
+
+Subtracting equation (2) from equation (1):
+
+\[
+[\text{Nullity} (X^T X) + \text{rank} (X^T X)] - [\text{Nullity} (X) + \text{rank} (X)] = 0
+\]
+
+Since \(\text{Nullity} (X^T X) = \text{Nullity} (X)\), this simplifies to:
+
+\[
+\text{rank} (X^T X) - \text{rank} (X) = 0
+\]
+
+\[
+\text{rank} (X^T X) = \text{rank} (X)
+\]
+
 %\hardsubproblem{Given matrix $X \in \reals^{n \times (p+1)}$, full rank and first column consisting of the $\onevec_n$ vector, now consider cost multiples (\qu{weights}) $c_1, c_2, \ldots, c_n$ for each mistake $e_i$. As an example, previously the mistake for the 17th observation was $e_{17} := y_{17} - \hat{y}_{17}$ but now it would be $e_{17} := c_{17} (y_{17} - \hat{y}_{17})$.  Derive the weighted least squares solution $\b$. No need to rederive the facts about vector derivatives. Hints: (1) show that SSE is a quadratic form with the matrix $C$ in the middle (2) Split this matrix up into two pieces i.e. $C = C^{\half} C^{\half}$, distribute and then foil (3) note that a scalar value equals its own transpose and (4) use the vector derivative formulas.}\spc{10}
+
 
 
 \intermediatesubproblem{[MA] If $p=1$, prove $r^2 = R^2$ i.e. the linear correlation is the same as proportion of sample variance explained in a least squares linear model.}\spc{6}
@@ -614,10 +803,110 @@ g(\bar{\mathbf{x}}) = \bar{y}.
 
 \intermediatesubproblem{Prove that $\bar{e} = 0$ in OLS.}\spc{10}
 
+
+\[
+e_i = y_i - \hat{y}_i
+\]
+
+The predicted values from the regression model are given by:
+
+\[
+\hat{y}_i = b_0 + b_1 x_i
+\]
+
+Summing over all residuals:
+
+\[
+\sum_{i=1}^{n} e_i = \sum_{i=1}^{n} (y_i - \hat{y}_i)
+\]
+
+\[
+= \sum_{i=1}^{n} y_i - \sum_{i=1}^{n} (b_0 + b_1 x_i)
+\]
+
+\[
+= \sum_{i=1}^{n} y_i - \sum_{i=1}^{n} b_0 - \sum_{i=1}^{n} b_1 x_i
+\]
+
+\[
+= \sum_{i=1}^{n} y_i - n b_0 - b_1 \sum_{i=1}^{n} x_i
+\]
+
+Since we know that:
+
+\[
+b_0 = \bar{y} - b_1 \bar{x}
+\]
+
+Substituting this into our equation:
+
+\[
+= n \bar{y} - n (\bar{y} - b_1 \bar{x}) - n b_1 \bar{x}
+\]
+
+\[
+= n \bar{y} - n \bar{y} + n b_1 \bar{x} - n b_1 \bar{x}
+\]
+
+\[
+= 0
+\]
+
+
+
+\[
+\bar{e} = \frac{1}{n} \sum_{i=1}^{n} e_i = \frac{1}{n} \times 0 = 0
+\]
+
 \hardsubproblem{If you model $\y$ with one categorical nominal variable that has levels $A, B, C$, prove that the OLS estimates look like $\ybar_A$ if $x = A$, $\ybar_B$ if $x = B$ and $\ybar_C$ if $x = C$. You can choose to use an intercept or not. Likely without is easier.}\spc{10}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.65\linewidth]{IMG_78133816E0B7-1.jpeg}
+    \caption{Problem 6(i)}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.65\linewidth]{IMG_33A54ECB3C60-1.jpeg}
+    \caption{Problem 6(i)}
+    \label{fig:enter-label}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.65\linewidth]{IMG_4ACE2B450072-1.jpeg}
+    \caption{Problem 6(i)}
+    \label{fig:enter-label}
+\end{figure}
 
 \intermediatesubproblem{[MA] Prove that the OLS model always has $R^2 \in \zeroonecl$.}\spc{5}
+
+Using trigonometry, we have:
+
+\[
+(\cos\theta)^2 = \frac{\left\| \hat{y} - \bar{y} \cdot \hat{1}_n \right\|^2}{\left\| y - \bar{y} \cdot \hat{1}_n \right\|^2}
+\]
+
+\[
+= \frac{SSR}{SST}
+\]
+
+\[
+= \frac{SST - SSE}{SST}
+\]
+
+\[
+= 1 - \frac{SSE}{SST}
+\]
+
+\[
+= R^2
+\]
+
+Since \( (\cos\theta)^2 \in [0,1] \), we see that \( R^2 \in [0,1] \).
+
 
 \end{enumerate}
 
