@@ -144,7 +144,7 @@ skimr::skim(cars)
 # Predict price from car type
 # Apply t(t()) to make into a matrixx
 my_ols_obj = my_ols(t(t(cars$Horsepower)), cars$Price)
-mod = lm(Price ~ Type, cars)
+mod = lm(Price ~ Horsepower, cars)
 
 # Get the b's
 coef(mod)
@@ -214,6 +214,7 @@ Use that converted feature as the one predictor in a regression. How well does t
 ```{r}
 #TO-DO
 mod = lm(price ~ color_as_numeric, data = diamonds)
+coef(mod)
 summary(mod)$sigma
 ```
 
@@ -223,7 +224,8 @@ Create new feature in the diamonds dataset, `color_as_nominal`, which is color e
 ```{r}
 #TO-DO
 diamonds$color_as_nomial = factor(diamonds$color, ordered = FALSE)
-
+table(diamonds$color_as_nomial)
+table(diamonds$color)
 ```
 
 Use that converted feature as the one predictor in a regression. How well does this regression do as measured by RMSE?
@@ -232,15 +234,20 @@ Use that converted feature as the one predictor in a regression. How well does t
 #TO-DO
 mod = lm(price ~ color_as_nomial, data = diamonds)
 summary(mod)$sigma
-# coef(mod)
+coef(mod)
+
+# It doesn't do well and similar error as before.
 
 ```
 
 Which regression does better - `color_as_numeric` or `color_as_nominal`? Why?
 
 #TO-DO
+I think they are both bad as the errors are high. However, I think color_as_nominal is a bit better as the error is a little bit low. 
+
 
 Now regress both `color_as_numeric` and `color_as_nominal` in a regression. Does this regression do any better (as gauged by RMSE) than either color_as_numeric` or `color_as_nominal` alone?
+- It doesn't do better than either color_as_numeric or color_as_nominal alone because it has redundent as both values are the same with different type of normalize value or unit.
 
 ```{r}
 #TO-DO
