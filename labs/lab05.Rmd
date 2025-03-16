@@ -1,0 +1,503 @@
+---
+title: "Lab 5 MATH 342W"
+author: "Ye Htut Maung"
+output: pdf_document
+date: "11:59PM March 16"
+---
+
+Load up the diamonds data
+
+```{r}
+pacman::p_load(ggplot2, skimr)
+diamonds = ggplot2::diamonds[1:1000, ]
+```
+
+Consider the regression of price on color. Construct the design matrix with an intercept, X1 using `model.matrix` and its corresponding hat matrix H1.
+
+```{r}
+#TO-DO
+X1 = model.matrix(price~color, data = diamonds)
+H1 = X1 %*% solve(t(X1)%*% X1) %*% t (X1)
+```
+
+Now construct the design matrix without the intercept, X2 using `model.matrix` and its corresponding hat matrix H2.
+
+```{r}
+#TO-DO
+X2 = model.matrix(price~ 0 + color, data = diamonds)
+H2 = X2 %*% solve(t(X2)%*% X2) %*% t (X2)
+```
+
+Verify the hat matrix constructed from this design matrix is the same as the hat matrix constructed from the design matrix with the intercept. (Fact: orthogonal projection matrices are unique).
+
+```{r}
+#TO-DO
+pacman::p_load(testthat)
+expect_equal(H1, H2)
+```
+
+Write a function spec'd as follows:
+
+```{r}
+#' Orthogonal Projection
+#'
+#' Projects vector a onto v.
+#'
+#' @param a   the vector to project
+#' @param v   the vector projected onto
+#'
+#' @returns   a list of two vectors, the orthogonal projection parallel to v named a_parallel, 
+#'            and the orthogonal error orthogonal to v called a_perpendicular
+orthogonal_projection = function(a, v){
+  #TO-DO
+  a_parallel = (sum(v * a) / sum(v**2)) * v
+  list(a_parallel = a_parallel, a_perpendicular = a - a_parallel)
+}
+```
+
+Provide predictions for each of these computations and then run them to make sure you're correct.
+
+```{r}
+orthogonal_projection(c(1,2,3,4), c(1,2,3,4))
+#prediction: parallel is itself and perpendicular is zero
+orthogonal_projection(c(1, 2, 3, 4), c(0, 2, 0, -1))
+#prediction: parallel is zero and perpendicular is 1 2 3 4
+result = orthogonal_projection(c(2, 6, 7, 3), c(1, 3, 5, 7))
+t(result$a_parallel) %*% result$a_perpendicular
+#prediction: 0
+result$a_parallel + result$a_perpendicular
+#prediction: 2 6 7 3
+result$a_parallel / c(1, 3, 5, 7)
+#prediction: 90.47 % of v
+```
+
+Using the Boston housing data and create a design matrix X for all features and vector y for the responses.
+
+```{r}
+y = MASS::Boston$medv
+X = cbind(1, as.matrix(MASS::Boston[, 1 : 13]))
+```
+
+Find the OLS solution for X being used as the design matrix.
+
+```{r}
+b = solve(t(X) %*% X) %*% t(X) %*% y
+yhat = X %*% b
+```
+
+
+Using your function `orthogonal_projection` from the previous lab, orthogonally project onto the column space of X by projecting y on each vector of X individually and adding up the projections and call the sum `yhat_naive`.
+
+```{r}
+#TO-DO
+yhat_naive = rep(0, length(yhat))
+for (j in 1:ncol(X)) {
+  yhat_naive = yhat_naive + orthogonal_projection(y, X[, j])$a_parallel
+}
+```
+
+How much double counting occurred? Measure the magnitude relative to the true LS orthogonal projection.
+
+```{r}
+sqrt(sum(yhat_naive^2)) / sqrt(sum(yhat^2))
+```
+
+Is this ratio expected? Why or why not?
+
+#TO-DO
+Yes. Because in summary, the ratio is expected to deviate from 1 because the sum of individual (non-orthogonal) projections overestimates the overall projection onto the column space, leading to a larger magnitude for the naive projection compared to the true LS projection.
+
+Convert X into V where V has the same column space as X but has orthogonal columns. You can use the function `orthogonal_projection`. This is the Gram-Schmidt orthogonalization algorithm (part A).
+
+```{r}
+V = matrix(NA, nrow = nrow(X), ncol = ncol(X))
+V[, 1] = X[, 1]
+for (j in 2 : ncol(X)){
+  V[, j] = X[, j]
+  #TO-DO
+  for(k in 1:(j-1)) {
+    V[, j] = V[, j] - orthogonal_projection(X[, j], V[, k])$a_parallel
+  }
+  
+} 
+
+# sum(V[, 7] * V[, 11])
+```
+
+Convert V into Q whose columns are the same except normalized. This is the Gram-Schmidt orthogonalization algorithm (part B).
+
+```{r}
+Q = matrix(NA, nrow = nrow(X), ncol = ncol(X))
+for(j in 1 : ncol(X)){
+  Q[, j] = V[, j] / sqrt(sum(V[, j]^2))
+}
+rm(V)
+```
+
+Verify that Q^T Q = I_{p+1} i.e. Q is an orthonormal matrix.
+
+```{r}
+#TO-DO
+expect_equal(t(Q) %*% Q, diag(ncol(X)))
+```
+
+Is your Q the same as what results from R's built-in QR-decomposition function?
+
+```{r}
+#TO-DO
+qr_obj = qr(X)
+Q_from_r = qr.Q(qr_obj)
+expect_equal(Q, Q_from_r)
+```
+ 
+Is this expected? Why did this happen?
+
+#TO-DO
+Yes this is expected because there are an infinite number of orthonormal basis of any column space and the likelihood of them being equal is highly unlikely.  
+There are many different orthonormal basis of any column space.
+
+Project the y vector onto each column of the Q matrix and test if the sum of these projections is the same as yhat.
+
+```{r}
+#TO-DO
+expect_equal(as.numeric(yhat), as.numeric( Q %*% t(Q) %*% y))
+head(as.numeric(yhat))
+head(as.numeric(Q %*% t(Q) %*% y))
+```
+
+Find the OLS estimates b_Q if Q is used as the design matrix and compare to b, the estimates from the original design matrix X. 
+
+```{r}
+#TO-DO
+b_Q =  t(Q) %*% y
+cbind(b, b_Q)
+```
+
+Are b and b_Q the same? Why or why not?
+
+#TO-DO
+No, projections will be the same, but the wights will be different. The orthonormal basis have different direction of vectors and it needs to have different weight to have the same yHat as when you use normal projection.
+
+Ensure that the predicted values are the same for both linear models: the one created with X as its design matrix and the one created with Q as its design matrix.
+
+```{r}
+#TO-DO
+# Duplicate Question, so Skip this question
+```
+
+
+Clear the workspace and load the boston housing data and extract X and y. The dimensions are n = 506 and p = 13. Create a matrix that is (p + 1) x (p + 1) full of NA's. Label the columns the same columns as X. Do not label the rows. For the first row, find the OLS estimate of the y regressed on the first column only and put that in the first entry. For the second row, find the OLS estimates of the y regressed on the first and second columns of X only and put them in the first and second entries. For the third row, find the OLS estimates of the y regressed on the first, second and third columns of X only and put them in the first, second and third entries, etc. For the last row, fill it with the full OLS estimates.
+
+
+```{r}
+rm(list = ls())
+
+#TO-DO
+X = as.matrix(cbind(1, MASS::Boston[, 1:13]))
+y = MASS::Boston$medv
+p_plus_one = 14
+results = matrix(NA, p_plus_one, p_plus_one)
+for(j in 1:p_plus_one) {
+  X_j = X[ , 1:j]
+  results[j, 1:j] = solve(t(X_j) %*% X_j) %*% t(X_j) %*% y
+}
+round(results, 3)
+
+
+```
+
+Why are the estimates changing from row to row as you add in more predictors?
+
+#TO-DO
+The matrix X doesn't have orthogonal columns and the estimates are changing from row to row as you add in more predictors because the model is adjusting as it takes in the additional data to return a better fitting line.
+
+Create a vector of length p+1 and compute the R^2 values for each of the above models. 
+
+```{r}
+#TO-DO
+n = nrow(X)
+results = array(NA, p_plus_one)
+SST = (n - 1) * var(y)
+for(j in 1:p_plus_one) {
+  X_j = X[ , 1:j, drop=FALSE]
+  
+  e = (diag(n) - X_j %*% solve(t(X_j) %*% X_j) %*% t(X_j)) %*% y
+  results[j] = 1- sum(e^2 )/ SST
+}
+
+round(results, 3)
+
+```
+
+Is R^2 monotonically increasing? Why?
+
+#TO-DO
+yes. we are adding more features and it decreases errors
+
+Create a 2x2 matrix with the first column 1's and the next column iid normal realizations. Find the absolute value of the angle (in degrees, not radians) between the two columns in absolute difference from 90 degrees.
+
+```{r}
+X = cbind(1, rnorm(2))
+acos(sum(X[,1] * X[,2]) / sqrt( sum(X[,1]**2) * sum(X[,2]**2) ))* 180 / pi
+```
+
+Repeat this exercise `Nsim = 1e5` times and report the average absolute angle.
+
+```{r}
+#TO-DO
+Nsim = 1e6
+abs_angles = array(NA, Nsim)
+for (nsim in 1:Nsim) {
+  X = cbind(1,rnorm(2))
+  abs_angles[nsim] = abs(acos(sum(X[,1] * X[,2]) / sqrt( sum(X[,1]**2) * sum(X[,2]**2) ))* 180 / pi)
+}
+mean(abs_angles)
+```
+
+Create a n x 2 matrix with the first column 1's and the next column iid normal realizations. Find the absolute value of the angle (in degrees, not radians) between the two columns. For n = 10, 50, 100, 200, 500, 1000, report the average absolute angle over `Nsim = 1e5` simulations.
+
+```{r}
+#TO-DO
+# Function to compute vector norm
+norm_vec = function(v) {
+  sqrt(sum(v^2))
+}
+
+# Define sample sizes (n values)
+N_s = c(2, 5, 10, 50, 100, 200, 500, 1000)
+Nsim = 1e5
+
+# Create an empty matrix to store the angle differences
+angles = matrix(0, nrow = Nsim, ncol = length(N_s))
+
+# Loop over each sample size
+for (j in seq_along(N_s)) {
+  n_val = N_s[j]
+  for (i in 1:Nsim) {
+    # Create a n_val x 2 matrix: first column ones, second column iid normals.
+    X = matrix(1, nrow = n_val, ncol = 2)
+    X[, 2] = rnorm(n_val)
+    
+    # Compute cosine of the angle between the two columns.
+    cos_theta = sum(X[, 1] * X[, 2]) / (norm_vec(X[, 1]) * norm_vec(X[, 2]))
+    
+    # Compute the angle in degrees
+    angle = acos(cos_theta) * 180 / pi
+    
+    # Compute the absolute difference from 90 degrees
+    angles[i, j] = abs(90 - angle)
+  }
+}
+
+# Compute the average absolute angle for each sample size
+avg_angles = colMeans(angles)
+
+print("Average absolute angle differences (in degrees) for each n in N_s:")
+print(avg_angles)
+
+
+
+```
+
+What is this absolute angle difference from 90 degrees converging to? Why does this make sense?
+
+#TO-DO
+
+Create a vector y by simulating n = 100 standard iid normals. Create a matrix of size 100 x 2 and populate the first column by all ones (for the intercept) and the second column by 100 standard iid normals. Find the R^2 of an OLS regression of `y ~ X`. Use matrix algebra.
+
+```{r}
+#TO-DO
+n = 100
+y = rnorm(n)
+X = cbind(1, rnorm(n))
+SST = sum((y - mean(y))^2)
+e = (diag(n) - X %*% solve (t(X) %*% X) %*% t(X)) %*% y
+SSE = sum(e^2)
+Rsq = 1 - SSE / SST
+```
+
+Write a for loop to each time bind a new column of 100 standard iid normals to the matrix X and find the R^2 each time until the number of columns p+1 = n = 100. Create a vector to save all R^2's. What happened??
+
+```{r}
+#TO-DO
+Rsqs = array(n)
+for (j in 1:(n-2)) {
+  X = cbind (X, rnorm(n))
+  SST = sum((y - mean(y)) ^ 2)
+  e = (diag(n) - X %*% solve (t(X) %*% X) %*% t(X)) %*% y
+  SSE = sum(e^2)
+  Rsqs[j] = 1 - SSE / SST
+}
+Rsqs
+```
+
+Test that the projection matrix onto this X is the same as I_n. You may have to vectorize the matrices in the `expect_equal` function for the test to work.
+
+```{r}
+pacman::p_load(testthat)
+#TO-DO
+P = X %*% solve(t(X) %*% X) %*% t(X)
+
+I_n = diag(n)
+
+# Test that the projection matrix P equals the identity matrix.
+if (all.equal(P, I_n)) {
+    print("Projection matrix P equals the identity matrix I_n.")
+} else {
+    print("Projection matrix P does NOT equal the identity matrix I_n.")
+}
+
+# Alternatively, use an assertion to ensure they are equal
+expect_equal(P, I_n, tolerance = 1e-8)
+
+```
+
+Add one final column to X to bring the number of columns to 101. Then try to compute R^2. What happens? 
+
+```{r}
+#TO-DO
+
+X = cbind(X, rnorm(n))
+SST = sum((y - mean(y))^2)
+e = (diag(n) - X %*% solve (t(X) %*% X) %*% t(X)) %*% y
+SSE = sum(e^2)
+1 - SSE / SST
+```
+
+Why does this make sense?
+
+#TO-DO
+This makes sense because the X become n x (n+1) which cannot be invertable. It is also not a full rank which means that  the new column could also be linearly dependent column.
+
+
+Split the Boston Housing Data into a training set and a test set where the training set is 80% of the observations. Do so at random.
+
+```{r}
+set.seed(37)
+n = nrow(MASS::Boston)
+
+K = 5
+n_test = round(n * 1 / K)
+n_train = n - n_test
+#TO-DO
+idx_train = sample(1:n, n_train)
+idx_test = setdiff(1:n, idx_train)
+boston_train = MASS::Boston[idx_train,]
+boston_test = MASS::Boston[idx_test,]
+# we've pulled two chunks; 1/5 train 4/5 test
+
+
+```
+
+Fit an OLS model. Find the s_e in sample and out of sample. Which one is greater? Note: we are now using s_e and not RMSE since RMSE has the n-(p + 1) in the denominator not n-1 which attempts to de-bias the error estimate by inflating the estimate when overfitting in high p. Again, we're just using `sd(e)`, the sample standard deviation of the residuals.
+
+```{r}
+#TODO
+mod = lm(medv ~ ., data = boston_train)
+sd(mod$residuals)
+yhat = predict(mod, boston_test)
+sd(boston_test$medv - yhat)
+```
+
+Do these two exercises `Nsim = 1000` times and find the average difference between s_e and ooss_e. 
+
+```{r}
+#TODO
+Nsim = 1000
+RMSE_trains = array(NA, Nsim)
+RMSE_tests = array(NA, Nsim)
+
+for (nsim in 1:Nsim) {
+  idx_train = sample(1:n, n_train, replace = FALSE)
+  idx_test = setdiff(1:n, idx_train)
+  
+  boston_train = MASS::Boston[idx_train, ]
+  boston_test = MASS::Boston[idx_test, ]
+  
+  mod = lm(medv ~ ., data = boston_train)
+  
+  # Compute in-sample RMSE
+  yhat_train = predict(mod, boston_train)
+  e_train = boston_train$medv - yhat_train
+  RMSE_trains[nsim] = sd(e_train)
+  
+  # Compute out-of-sample RMSE
+  yhat_test = predict(mod, boston_test)
+  e_test = boston_test$medv - yhat_test
+  RMSE_tests[nsim] = sd(e_test)
+}
+
+mean(RMSE_trains)
+mean(RMSE_tests)
+```
+
+We'll now add random junk to the data so that `p_plus_one = n_train` and create a new data matrix `X_with_junk.`
+
+```{r}
+p_plus_one = 14
+X = cbind(1, boston_train[, 1:13]) 
+X_with_junk = cbind(X, matrix(rnorm(n_train * (n_train - p_plus_one)), nrow = n_train))
+dim(X)
+dim(X_with_junk)
+```
+
+Repeat the exercise above measuring the average s_e and ooss_e but this time record these metrics by number of features used. That is, do it for the first column of `X_with_junk` (the intercept column), then do it for the first and second columns, then the first three columns, etc until you do it for all columns of `X_with_junk`. Save these in `s_e_by_p` and `ooss_e_by_p`.
+
+
+```{r}
+#TODO
+# gonna have for loop, do a regression
+s_e_by_p = array(NA, n_train)
+ooss_e_by_p = array(NA, n_train)
+for (j in (p_plus_one + 1) : n_train) {
+  mod = lm(boston_train$medv~., X_with_junk[, 1:j])
+  s_e_by_p[j] = sd(mod$residuals)
+  yhat = boston_test[, 1:13] %*% mod$codfficients[1 : p_plus_one]
+  ooss_e_by_p[j] = sd(boston_test$med - predict(mod, boston_test[, ]))
+}
+```
+
+You can graph them here:
+
+```{r}
+pacman::p_load(ggplot2)
+ggplot(
+  rbind(
+    data.frame(s_e = s_e_by_p, p = 1 : n_train, series = "in-sample"),
+    data.frame(s_e = ooss_e_by_p, p = 1 : n_train, series = "out-of-sample")
+  )) +
+  geom_line(aes(x = p, y = s_e, col = series))
+```
+ 
+Is this shape expected? Explain.
+
+#TO-DO
+
+
+Now repeat the exercise above except use 5-fold CV (K=5 cross validation) for each p. The code below will also plot the oos RMSE. This oos RMSE curve should be similar to the curve in the above problem, but now it will be more stable. 
+
+
+```{r}
+K = 5
+oos_e_by_p_k = matrix(NA, nrow = n, ncol = n) #save all residuals here - each row are the residuals for number of features = j
+
+#TODO
+
+
+#now plot it
+pacman::p_load(ggplot2)
+ggplot(data.frame(
+    s_e = apply(ooss_e_by_p_k, 1, sd), #we are taking the sd over all n oos residuals
+    p = 1 : n_train
+  )) +
+  geom_line(aes(x = p, y = s_e))
+
+```
+
+Even though the concept of confidence intervals (CIs) will not be on the midterm, construct 95% CIs for each of the oosRMSE measurements by number of features, p. A CI is a real-number interval with a lower bound and upper bound. The formula for the CI is [s_e - 2 * s_s_e, s_e + 2 * s_s_e].
+
+
+```{r}
+#TODO
+```
+

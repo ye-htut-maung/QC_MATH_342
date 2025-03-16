@@ -1,0 +1,51 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\include{preamble}
+\title{Modeling Essay Proposal}
+\author{Ye Htut Maung}
+\date{March 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Preassignment}
+
+
+I am interested in writing about revenue in a software as a service business. Specifically, I would like to predict monthly recurring revenue(MRR) since most of the SaaS businesses use a subscription-based model with monthly payments.
+
+Predicting this phenomenon is important because SaaS startups rely on recurring revenue to sustain and grow their businesses.As the technology industry expands, more startups and companies are adapting SaaS model.Accurate revenue forecasting can help these companies make informed decisions about budgeting, pricing strategies, marketing, hiring and scaling their services. Investors can also see the companies revenue predictions and they can also optimized in the investment.
+
+The univariate response metric that measures this phenomenon is monthly recurring revenue (MRR), which is the income that a company expects to receive in payments on a monthly basis. MRR is
+\[
+\text{MRR} = \text{Total Number of Active Users} \times \text{Average Revenue Per User (ARPU)}
+\]
+For example, suppose a business has three subscription plans: Plan A costs \$10/month, Plan B costs \$20/month, and Plan C costs \$30/month. In a given month, the business has 100 customers subscribed to Plan A, 50 customers subscribed to Plan B, and 30 customers subscribed to Plan C. The MRR for the business in that month would be \$2,900.
+
+\[
+\text{MRR} = (100 \times \$10) + (50 \times \$20) + (30 \times \$30) = \$2,900
+\]
+
+
+The response will be measured in US dollar and tracked on a monthly basis over a period of at least 3 years (36 months). Quarterly revenue reports can get from the companies websites or we can measure using tools that can track SaaS subscription metric. 
+
+To ensure that I can collect this response variable multiple times($n$ times), I will use financial reports from SaaS companies and SaaS analytics platforms that track MRR growth trends. Then, I will use financial data to calculate industry benchmarks such as Revenue Growth Rate, Average Revenue Per User, Monthly Recurring Revenue, Customer Churn Rate, Customer Acquisition Cost and Net Revenue Retention.
+
+
+A preliminary listing of features/ proxies that I can use to model the response are:
+\begin{enumerate}
+    \item Revenue Growth Rate
+    \item Monthly Recurring Revenue
+    \item Customer Churn Rate which means the amount of customer stop using the service
+    \item Number of Active User
+    \item Distribution of Subscription Plans
+    \item New User Sign Up
+    \item Average Revenue Per User
+    \item Marketing Spend
+    \item Customer Acquisition Cost
+    \item Net Revenue Retention
+\end{enumerate}
+
+
+
+\end{document}
