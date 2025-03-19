@@ -446,14 +446,19 @@ Repeat the exercise above measuring the average s_e and ooss_e but this time rec
 
 ```{r}
 #TODO
-# gonna have for loop, do a regression
-s_e_by_p = array(NA, n_train)
-ooss_e_by_p = array(NA, n_train)
-for (j in (p_plus_one + 1) : n_train) {
-  mod = lm(boston_train$medv~., X_with_junk[, 1:j])
+s_e_by_p = array(data = NA, dim = n_train)
+ooss_e_by_p = array(data = NA, dim = n_train)
+for (j in 1: n_train) {
+  # Model using training set, through column j
+  mod = lm(boston_train$medv ~ 0 + ., data = X_with_junk[, 1:j, drop=FALSE])
+  
+  # in-sample error
   s_e_by_p[j] = sd(mod$residuals)
-  yhat = boston_test[, 1:13] %*% mod$codfficients[1 : p_plus_one]
-  ooss_e_by_p[j] = sd(boston_test$med - predict(mod, boston_test[, ]))
+  
+  y_hat = as.matrix(cbind(1, boston_test[, 1:13])) %*% mod$coefficients[1:p_plus_one]
+  
+  # out-of-sample error
+  ooss_e_by_p[j] = sd(boston_test$medv - y_hat)
 }
 ```
 
@@ -472,26 +477,52 @@ ggplot(
 Is this shape expected? Explain.
 
 #TO-DO
-
+Yes this shape is expected because as we add more features the in-sample error will decrease due to the the model fitting the additional features and data. However, the out of sample error will start to get worse due to the over-fitting that is occurring. This will lead to a worse modle that produces worse predictions for data that is out of sample. 
 
 Now repeat the exercise above except use 5-fold CV (K=5 cross validation) for each p. The code below will also plot the oos RMSE. This oos RMSE curve should be similar to the curve in the above problem, but now it will be more stable. 
 
 
 ```{r}
-K = 5
-oos_e_by_p_k = matrix(NA, nrow = n, ncol = n) #save all residuals here - each row are the residuals for number of features = j
 
-#TODO
+K = 5
+
+set.seed(1984)
+temp = rnorm(n)
+folds_vec = cut(temp, breaks = quantile(temp, seq(0, 1, length.out = K + 1)), include.lowest = TRUE, labels = FALSE)
+head(folds_vec, 100)
+rm(temp)
+
+min_ntrain = min(n-table(folds_vec))
+
+ooss_e_by_p = array(NA, min_ntrain)
+oos_se_by_p_by_k= matrix(NA, nrow = n_train, ncol = K)
+for(j in 1:min_ntrain){
+  all_e_test = array(NA, n)
+for(k in 1:K){
+    test_indices = which(folds_vec == k)
+    train_indices = setdiff(1:n, test_indices)
+    X_with_junk_train = X_with_junk[train_indices, ]
+    y_train = y[train_indices]
+    X_with_junk_test = X_with_junk[test_indices, ]
+    y_test = y[test_indices]
+    X_with_junk_train_j = X_with_junk_train[ ,1:j, drop = FALSE]
+    b = solve(t(X_with_junk_train_j)%*% X_with_junk_train_j) %*% t(X_with_junk_train_j      %*% (y_train))
+    yhat_test = X_with_junk_test[ ,1:j, drop = FALSE] %*% b
+    e_k = y_test - yhat_test
+    e_test[test_indices] = e_k
+    oos_se_by_p_by_k[j,k] = sd(e_k)
+    
+  }
+  ooss_e_by_p[j] = sd(all_e_test)
+}
 
 
 #now plot it
 pacman::p_load(ggplot2)
 ggplot(data.frame(
-    s_e = apply(ooss_e_by_p_k, 1, sd), #we are taking the sd over all n oos residuals
-    p = 1 : n_train
+    s_e =  ooss_e_by_p[j] = sd(all_e_test) 
   )) +
   geom_line(aes(x = p, y = s_e))
-
 ```
 
 Even though the concept of confidence intervals (CIs) will not be on the midterm, construct 95% CIs for each of the oosRMSE measurements by number of features, p. A CI is a real-number interval with a lower bound and upper bound. The formula for the CI is [s_e - 2 * s_s_e, s_e + 2 * s_s_e].
@@ -499,5 +530,10 @@ Even though the concept of confidence intervals (CIs) will not be on the midterm
 
 ```{r}
 #TODO
+s_s_es_by_j = apply(oos_se_by_p_by_k,1, sd)
+cbind(
+  ooss_e_by_p - 2 * s_s_es_by_j/ sqrt(K),
+  ooss_e_by_p + 2 * s_s_es_by_j/ sqrt(K)
+)
 ```
 
