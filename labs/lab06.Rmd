@@ -1,0 +1,428 @@
+---
+title: "Lab 6"
+author: "Ye Htut Maung"
+output: pdf_document
+date: "11:59PM March 30"
+---
+
+
+#Logistic Regression
+
+Let's consider the Pima Indians Diabetes dataset from 1988:
+
+```{r}
+?MASS::Pima.tr2
+skimr::skim(MASS::Pima.tr2)
+y = ifelse(MASS::Pima.tr2$type == "Yes", 1, 0)
+X = cbind(1, MASS::Pima.tr2[, 1 : 7])
+```
+
+Note the missing data. We will learn about how to handle missing data towards the end of the course. For now, replace, the missing data in the design matrix X with the average of the feature x_dot,j. You can check that this worked with the table commands at the end of the chunk:
+
+```{r}
+#TO-DO
+
+X$bp[is.na(X$bp)] = mean(X$bp, na.rm=TRUE)
+X$skin[is.na(X$skin)] = mean(X$skin, na.rm=TRUE)
+X$bmi[is.na(X$bmi)] = mean(X$bmi, na.rm=TRUE)
+
+
+skimr::skim(X)
+```
+
+Now let's fit a log-odds linear model of y=1 (type is "diabetic") on just the `glu` variable. Use `optim` to fit the model.
+
+```{r}
+#TO-DO
+x = X$glu
+negative_log_probability = function(w_vec) {
+  sum(y * log(1 + exp(-(w_vec[1] + w_vec[2] * x))) + (1 - y) * log(1 + exp(w_vec[1] + w_vec[2] * x)))
+}
+optim(c(0, 0), negative_log_probability)
+
+
+```
+
+Masters students: write a `fit_logistic_regression` function which takes in X, y and returns b which uses the optimization routine.
+
+```{r}
+fit_logistic_regression = function(X, y){
+  b = #TO-DO
+  b 
+}
+```
+
+Run a logistic regression of y=1 (type is "diabetic") on just the `glu` variable using R's built-in function and report b_0, b_1.
+
+```{r}
+#TO-DO
+b = coef(glm(y ~ x, family = "binomial"))
+b
+```
+
+Comment on how close the results from R's built-in function was and your optimization call.
+
+#TO-DO
+They are identical and their margins are small
+
+Interpret the value of b_1 from R's built-in function.
+
+#TO-DO
+One unit increase in x which is glucose resutls in a 0.04 increase in log-odds of having diabetes
+
+Interpret the value of b_0 from R's built-in function.
+
+#TO-DO
+When x is 0, y is -5.84 which mean that if a person glucose level is 0, there is unlikey to have a diabetes as there is negative chance
+
+Plot the probability of y=1 from the minimum value of `glu` to the maximum value of `glu`.
+
+```{r}
+#TO-DO
+phats = 1 / ( 1 + exp(-(b[1] +b[2] * x)))
+pacman::p_load(ggplot2)
+ggplot(data.frame(x = x, phat = phats)) +
+  geom_point(aes(x = x, y=phat))
+```
+
+Run a logistic regression of y=1 (type is "diabetic") on all variables using R's built-in function and report the b vector.
+
+```{r}
+coef(glm(y ~ X[, "glu"], family = "binomial"))
+```
+
+Predict the probability of diabetes for someone with a blood sugar of 150.
+
+```{r}
+#TO-DO
+prob_150 = 1 / ( 1 + exp(-(b[1] +b[2] * 150)))
+prob_150
+```
+
+For 100 people with blood sugar of 150, what is the probability more than 75 of them have diabetes? (You may need to review 241 to do this problem).
+
+```{r}
+#TO-DO
+# 1 - binomcdf (100 chance 75)
+1 - pbinom(75, size = 100, prob = prob_150)
+```
+
+Plot the in-sample log-odds predictions (y-axis) versus the real response values (x-axis).
+
+```{r}
+#TO-DO
+log_odds_hats = b[1] +b[2] * x
+ggplot(data.frame(y = y, log_odds_hat = log_odds_hats)) + 
+  geom_boxplot(aes(x = factor(y), y = log_odds_hat))
+```
+
+Plot the in-sample probability predictions (y-axis) versus the real response values (x-axis).
+
+```{r}
+#TO-DO
+
+ggplot(data.frame(prob_pred = phats, realResponse = y)) + 
+  geom_boxplot( aes(x = factor(realResponse), y = prob_pred))
+```
+
+Comment on how well you think the logistic regression performed in-sample.
+
+#TO-DO
+Since many predictions for y = 1 were close to 0.5, and predictions for both y = 0 and y = 1 were spread out a lot, logistic regression didn’t do very well on the training data
+
+Calculate the in-sample Brier score.
+
+```{r}
+#TO-DO
+mean(-(y - phats)^2)
+
+```
+
+Calculate the in-sample log-scoring rule.
+
+```{r}
+#TO-DO
+mean(y * log(phats) + (1 - y) * log(1 - phats))
+```
+
+
+Run a probit regression of y=1 (type is "diabetic") on all variables using R's built-in function and report the b vector.
+
+
+```{r}
+#TO-DO
+# add 0 + to drop intercept
+probit_mod = glm(y ~ 0 + . , data = X, family = binomial(link="probit"))
+logit_mod = glm(y ~ 0 + . , data = X, family = binomial(link="logit"))
+coef(probit_mod)
+coef(logit_mod)
+```
+
+Does the weight estimates here in the probit fit have different signs than the weight estimates in the logistic fit? What does that mean?
+
+#TO-DO
+The weight estimates in the probit and logit fits have the same signs. This means both models agree on the direction of each variable’s effect on the outcome, even though they use different link functions.
+
+Plot the in-sample probability predictions (y-axis) versus the real response values (x-axis).
+
+```{r}
+#TO-DO
+phats_probit = predict(probit_mod, X, type= "response") 
+phats_logit = predict(logit_mod, X, type = "response")
+pacman::p_load(ggplot2)
+ggplot(data.frame(y = y, phat=phats_probit)) + geom_boxplot(aes(x = factor(y), y =phat))
+ggplot(data.frame(y = y, phat=phats_logit)) + geom_boxplot(aes(x = factor(y), y =phat))
+```
+
+Calculate the in-sample Brier score.
+
+```{r}
+#TO-DO
+mean(-(y - phats_probit)^2)
+mean(-(y - phats_logit)^2)
+
+```
+
+Calculate the in-sample log-scoring rule.
+
+```{r}
+#TO-DO
+mean(y * log(phats_probit) + (1 - y) * log(1 - phats_probit))
+mean(y * log(phats_logit) + (1 - y) * log(1 - phats_logit))
+```
+
+Which model did better in-sample?
+
+#TO-DO
+Probit does a bit better in-sample probit is closer to 0
+
+Compare both models oos using the Brier score and a test set with 1/3 of the data.
+
+```{r}
+#TO-DO
+set.seed(1234)
+K = 3
+n = nrow(X)
+
+n_test = round(n/K)
+n_train = n - n_test
+index_test = sample(1:n, size = n_test, replace = FALSE)
+index_train = setdiff(1:n, index_test)
+
+X_test = X[index_test, ]
+y_test = y[index_test]
+X_train = X[index_train, ]
+y_train = y[index_train]
+
+probit_mod_is = glm(y_train ~ 0 + ., data = X_train, family = binomial(link = "probit"))
+logit_mod_is = glm(y_train ~ 0 + ., data = X_train, family = binomial(link = "logit"))
+
+phat_probit_oos = predict(probit_mod_is, newdata = X_test, type = "response")
+phat_logit_oos = predict(logit_mod_is, newdata = X_test, type = "response")
+
+mean(-(y_test - phat_probit_oos) ^ 2)
+mean(-(y_test - phat_logit_oos) ^ 2)
+```
+
+Which model did better oos?
+
+#TO-DO
+Probit model is slightly better than the logit model as probit's brier score is closer to 0
+
+
+
+#Polynomial Regression and Interaction Regression
+
+We will work with the diamonds dataset again. Here we load up the dataset and convert all factors to nominal type:
+
+```{r}
+pacman::p_load(ggplot2) #this loads the diamonds data set too
+diamonds = ggplot2::diamonds
+?diamonds
+diamonds$cut =      factor(diamonds$cut, ordered = FALSE)      #convert to nominal
+diamonds$color =    factor(diamonds$color, ordered = FALSE)    #convert to nominal
+diamonds$clarity =  factor(diamonds$clarity, ordered = FALSE)  #convert to nominal
+skimr::skim(diamonds)
+```
+
+Given the information above, what are the number of columns in the raw X matrix?
+
+#TO-DO
+There are 24 columns including intercept
+
+Verify this using code:
+
+```{r}
+#TO-DO
+X = model.matrix(price ~ ., data = diamonds)
+ncol(X)
+```
+
+Would it make sense to use polynomial expansions for the variables cut, color and clarity? Why or why not?
+
+#TO-DO
+no because polynomial expansions don’t make sense for categorical variables like cut, color, and clarity. These variables are factors and, when dummy coded, they become binary (0 or 1). Squaring or applying higher order polynomials to binary features doesn’t create new information—0^2 is 0 and 1^2 is 1. This leads to linearly dependent columns and a non–full rank design matrix.
+
+Would it make sense to use log transformations for the variables cut, color and clarity? Why or why not?
+
+#TO-DO
+no because log transformations require meaningful numeric values. Since cut, color, and clarity are categorical applying a log transformation isn’t appropriate.
+
+In order to ensure there is no time trend in the data, randomize the order of the diamond observations in D:.
+
+```{r}
+#TO-DO
+diamonds = diamonds[sample(1: nrow(diamonds), nrow(diamonds)), ]
+```
+
+Let's also concentrate only on diamonds with <= 2 carats to avoid the issue we saw with the maximum. So subset the dataset. Create a variable n equal to the number of remaining rows as this will be useful for later. Then plot it.
+
+```{r}
+#TO-DO
+diamonds = diamonds[diamonds$carat <= 2, ]
+n = nrow(diamonds)
+```
+
+Create a linear model of `price` ~ carat and gauge its in-sample performance using s_e.
+
+```{r}
+#TO-DO
+summary(lm(price ~ carat, data = diamonds))$sigma
+```
+
+Create a model of price ~ clarity and gauge its in-sample performance
+
+```{r}
+#TO-DO
+summary(lm(price ~ clarity, data = diamonds))$sigma
+```
+
+Why is the model price ~ carat substantially more accurate than price ~ clarity?
+
+#TO-DO
+Carat is a continuous variable so there is no loss of information while clarity is a categorial variable and when you dummified there is loss of information.
+
+Create a new transformed feature ln_carat and plot it vs price.
+
+```{r}
+#TO-DO
+diamonds$ln_carat = log(diamonds$carat)
+ggplot(diamonds) + geom_point(aes(x = carat, y = price, color = "blue")) +
+  geom_point(aes(x = ln_carat, y = price, color = "red"))
+```
+
+Would price ~ ln_carat be a better fitting model than price ~ carat? Why or why not?
+
+#TO-DO
+Yes.using price ~ carat is  better because in the picture price ~ carat is more smooth and price~ln_carat is condense in the middle which can lose some information and I can also say be checking R^2 and RMSE. 
+
+Verify this by comparing R^2 and RMSE of the two models:
+
+```{r}
+#TO-DO
+lin_mod = lm(price ~ carat, data = diamonds)
+log_mod = lm(price ~ ln_carat, data = diamonds)
+
+summary(lin_mod)$sigma
+summary(log_mod)$sigma
+summary(lin_mod)$r.squared
+summary(log_mod)$r.squared
+
+```
+
+Create a new transformed feature ln_price and plot its estimated density:
+
+
+```{r}
+#TO-DO
+diamonds$ln_price = log(diamonds$price)
+ggplot(diamonds) + geom_histogram(aes(x = ln_price), binwidth = 0.01)
+```
+
+
+Now plot it vs carat.
+
+```{r}
+ggplot(diamonds, aes(x = carat, y = ln_price)) + 
+  geom_point()
+```
+
+Would ln_price ~ carat be a better fitting model than price ~ carat? Why or why not?
+
+#TO-DO
+using ln_price ~ carat is better than price ~ carat because diamond prices grow multiplicatively with carat weight. Taking the log of price tends to linearize this relationship and reduce issues with varying variance
+
+Verify this by computing s_e of this new model. Make sure these metrics can be compared apples-to-apples with the previous.
+
+```{r}
+#TO-DO
+mod1 = lm(price~carat, diamonds)
+mod2 = lm(ln_price~carat, diamonds)
+summary(mod1)$sigma
+#summary(mod2)$sigma
+yhat2 = exp(mod2$fitted.values)
+e2 = diamonds$price - yhat2
+sse2 = sum(e2^2)
+rmse2 = sqrt(sse2/(n-2))
+rmse2
+```
+
+We just compared in-sample statistics to draw a conclusion on which model has better performance. But in-sample statistics can lie! Why is what we did valid?
+
+#TO-DO
+What we did valid is that the number of rows is bigger than than the number of columns which is freature.
+
+
+Plot ln_price vs ln_carat.
+
+```{r}
+#TO-DO
+ggplot(diamonds, aes(x = ln_carat, y = ln_price)) +
+  geom_point()
+```
+
+Would ln_price ~ ln_carat be the best fitting model than the previous three we considered? Why or why not?
+Yes. I think there data points are more linear and it is kinda group in the middle of the graph. So with the linear model it is better in prediction
+
+Verify this by computing s_e of this new model. Make sure these metrics can be compared apples-to-apples with the previous.
+
+```{r}
+#TO-DO
+mod3 = lm(ln_price~ln_carat, diamonds)
+summary(lin_mod)$sigma
+yhat3 = exp(mod3$fitted.values)
+e3 = diamonds$price - yhat3
+sse3 = sum(e3^2)
+rmse3 = sqrt(sse3/(n-2))
+rmse3
+```
+
+Compute b, the OLS slope coefficients for this new model of ln_price ~ ln_carat.
+
+```{r}
+#Model A
+#TO-DO
+coef(mod3)
+```
+
+Interpret b_1, the estimated slope of ln_carat.
+
+#TO-DO
+A 1% increase in carat weight is associated with about a 1.696590% increase in price, on average.
+
+Interpret b_0, the estimated intercept.
+
+#TO-DO
+When ln_carat = 0 (i.e., carat = 1), the model predicts ln_price = 8.462579. Converting back, the predicted price is exp(8.462579), which is about $4,740 for a 1-carat diamond
+
+Create other features ln_x, ln_y, ln_z, ln_depth, ln_table.
+
+```{r}
+#TO-DO
+diamonds$ln_x = log(diamonds$x)
+diamonds$ln_y = log(diamonds$y)
+diamonds$ln_z = log(diamonds$z)
+diamonds$ln_depth = log(diamonds$depth)
+diamonds$ln_table = log(diamonds$table)
+```
+
