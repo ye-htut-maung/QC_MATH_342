@@ -1,0 +1,183 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx} % Required for inserting images
+
+\usepackage[a4paper, margin=1in]{geometry}  % 1-inch margins
+\usepackage{setspace}  % For double spacing
+\usepackage{lmodern}  % Use Computer Modern font
+\usepackage{graphicx}  % For including images (if needed)
+\usepackage{biblatex}  % For bibliography
+\usepackage{titlesec}  % For customizing section headings
+\usepackage{footmisc}  % For controlling footnotes
+
+% Set double spacing
+\doublespacing
+
+
+
+
+\title{The Average Monthly Recurring Revenue Of Software As A Service Companies Remains Difficult to Predict}
+\author{Ye Htut Maung}
+\date{April 2025}
+\include{preamble}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Over the last two decade, technology has been developing at a fast pace. It changes the way we used to work in our daily life. Especially after the COVID pandemic in 2020 hits worldwide, We rely on computer software more than before. As an example, Zoom, which is an online proprietary videotelephony software program, becomes the most used software during pandemic as we need to quarantine at our home and all education program and most of the work moved from physical to online present. When you use Zoom software before, you notice that there are free plan and premium plan, which has more features than free plan but you need to may every mouth to be able to use it which we call it subscription. You may notice that most of the software that you are using is subscription based and not one time purchase. That means you do not own the software and you are just using as you need. So, Why does subscription based product become popular? We are going to look at in both perceptive, consumer and producer. 
+
+As a consumer, the first thing is that using subscription is cheaper than one time purchase or buying a product. As an example, for Adobe software in 2016, the one time purchase of Photoshop is \$699 and the subscription fee to use Photoshop is only \$9.99 per month. Not like one time purchase, you will also get constant update and other features like customer service for the software. So, you don't need to buy software again to get an update version. As producers point of view, they have consistent and predictable revenue, long term profit, costumer loyalty, easier to maintenance and reduced piracy. That is why you will see many software that offers subscription. We called subscription based companies as Software as Service or SaaS companies. How do we measure the success or the revenue of SaaS?
+
+One of the most important financial metrics is Monthly Recurring Revenue(MRR). MRR represents the total predictable revenue a company expects to earn from its active subscription every month. Since most SaaS company subscription is monthly basis, MRR can provide clear and consistent way to track how much the company generate revenue regularly. For example, if we oversimplified the calculation of MRR and a company has 1,000 customer and the average monthly plan is \$10, then its average MRR is 10,000. This metric is valuable because it helps business forecast revenue, make informed budgeting decision, and track growth over time. Unlike one time purchase, where the revenue is unpredictable on sale, MRR reflects the stability and long-term sustainability of a company's financial performance. As a result, investors and analysts closely monitor MRR to assess how well a SaaS company is performing.
+
+Thus, there is a clear connection between, subscription pricing, customer behavior and the financial success of a SaaS business. A natural question to ask and the focus of this paper is: can we reliably predict the average monthly recurring revenue a SaaS company earns based on observable features such as user count, churn rate or marketing spend? Since MRR is measured month by month, modeling it directly would require repeated measures methods, which is more complex to do. To simplify, we are going to predict average MMR over a year, which is a single, stable numeric value per company. If this quantity can be predicted accurately, it could help companies optimize their strategies for growth, guide investor decisions, and better allocate resources. We will explore this question herein. 
+
+In Section 2, we will define the core phenomenon and discuss the motivation behind modeling it. Section 3 will introduce the mathematical framework, including the response variable and chosen features. Sections 4 through 7 will describe the supervised learning process and its necessary components. Section 8 will discuss the model selection problem while Section 9 will outline some potential use of real-world applications of the model. Finally, Section 10 will provide concluding thoughts on the accuracy and usefulness of modeling average MRR in SaaS businesses.
+
+\section{Phenomena and Models}
+
+A phenomena is the real world process or behavior we are trying to understand or predict. We can also say that it is reality, absolute truth or system. For instance, the speed of a car, streets in the city, sleep quality, the height of a person and so on. In our case, the phenomenon is the average monthly recurring revenue over the past year of a SaaS company: given the active user and percentage of user on premium plan, what is the average MRR of a company? So, given our circumstance, we will know how successful a SaaS company can be. To understand both phenomenon and the prediction to the future, scientists construct a model for it which is the approximation to the reality. A model is not a perfect scale to the reality. It is built by collecting metric from the real world process. A model globe is the approximation of the earth. A map is the approximation to the roads and streets. A Newton law of $F = ma$ is also not perfect but if you know the approximate force and the approximate mass, you can predict its force. So, you may come up with the question of "why do we use models even though they are not perfect?" The answer is it is useful to use in our life. Maps are not accurate but it is useful to navigate around the places. 
+
+While there are many models, mathematical models are the models that you can measure by using metrics. Regarding to our phenomenon, which is monthly recurring revenue, it can be present as numerical values and all the features that can approximate or predict average MRR can also be present as numerical values and we will see those factors in detail in section 3. In our case, a model is to predict average MRR based on the factors that can affect the changes in average MRR. In general, the response measurement or output metric of a phenomena is denoted mathematically as $y$, such that $y \in \mathcal{Y}$ the set of all possible output measurements. The average MRR over the past year of a company in U.S. dollar is our response $y$ and since it is income, our response space is in the set of real number which is greater than or equal to 0. 
+
+\section{Average Monthly Recurring Revenue of a year as a Function}
+
+It will become useful at this time to employ a common metaphor from mathematics, that of the function machine. Think of our model as a black box: there will be an input data that put into the black box and process then you will get prediction output response. Before we define our input that will be use in modeling, let's take a look at our previous definition of calculation monthly recurring revenue. We talked about that if we multiply the average number of customers and average monthly plan, we can get MRR. Then, as we are going to predict average monthly recurring revenue, we will add all 12 months of MRR and divide by 12. However, this is not perfect to calculate average MRR(AMRR) as it is oversimplified to all the features that account into producing monthly revenue. There are casual drivers that really effect AMRR. So, what does mean casual driver? A casual driver is the true underlying cause of the response $y$; part of the real-world system, even if unmeasurable. Mathematically, we present them as $z$'s or $(z_1, z_2, \dots , z_q)$. To illustrate this point consider some reasonable casual drivers for our phenomena of interest:
+
+$z_1$ = Customer satisfaction
+
+$z_2$ = Product quality
+
+$z_3$ = Marketing effectiveness
+
+$z_4$ = Market demand
+
+$z_5$ = Economic Condition
+
+$z_6$ = Customer Support Quality
+
+$z_7$ = Trust to the company
+
+It is easy to see how we could measure these different casual drivers. However, they are fundamentally unknown or impossible to measure to us as there could be more true drivers to the phenomena. If you take a look at $z_5$, economic condition, you can never predict it or it is difficult to measure the economic condition. Similarly, $z_7$, that trust can never be able to measure with metric since it is the feeling of customers. 
+
+What we can do with these casual drivers is that we can pass them into an exact functional relation $t$ which will give the phenomena. We can present mathematically as 
+
+\[
+y =t(z_1, z_2, \dots, z_q)
+\]
+
+The question is "do we know what an exact functional relation is?" and the answer is no. So, the best that we can do is come up with another machine or function $f$ which can approximate $t$ or the best functional relationship we can get from the input. Furthermore, we can look for approximations of our casual drivers that are measurable. To express mathematically, we are going to select $x$'s or $(x_1, x_2, \dots, x_n)$ to act as proxies, which we can call as features, attributes, characteristics, independent variable, explanatory variable or predictors, for our $(z_1, z_2, \dots, z_q)$ and denote a new rule $f$ which accounts for the fact that $t$ is beyond our understanding. Using these new ideas we obtain:
+
+\[
+y = t(z_1, z_2, \dots, z_q) = f(x_1, x_2, \dots, x_p) + \delta 
+\]
+
+In the above equation, We introduce a new mathematical letter, $\delta$. We call it "error due to ignorance" or \textbf{"ignorance error"}. The reason is that we cannot determine $t$ from $f$ directly and there is an error of ignoring real features that can predict the true $z$'s. To reduce ignorance error, we can add more features that can approximate to $z$'s. Our features, $x$'s need to be independent variables which mean that they don't depend on each other. For example, if $x_1$ is the measurement of table in inches and $x_2$ is the measurement of table in centimeters, $x_1$ and $x_2$ are dependent on each other and in our features, we cannot have like that. Mathematically, we call it as full rank. Before explaining about full rank, let's take a look at our features that could act as proxies for some of the underlying casual drivers of our phenomena:
+
+$x_1$ = Customer Churn Rate (Measure how many customers leave in percent)
+
+$x_2$ = Number of Active Users
+
+$x_3$ = Customer Acquisition Cost (How much it costs to get a new customer)
+
+$x_4$ = Percent of user on premium plans
+
+$x_5$ = Revenue Growth Rate (Measure in percent)
+
+
+The features selected for this model are all numeric and can be measured using data commonly available in financial reports or SaaS analytics tools. Each measurement are practical and can be make accurately as many SaaS companies implement the collection of data in their software. It will be just a matter of time or money to get these data. In the following, we will explore about how to calculate each features.
+
+\begin{itemize}
+
+    \item $x_1$ = \textbf{Customer Churn Rate}, measured as the percentage of customers who canceled their subscriptions over the past year. It is computed by:
+    \[
+    x_1 = \frac{\text{Number of Customers Lost in a Year}}{\text{Number of Customers at Start of Year}} \times 100
+    \]
+    
+    \item $x_2$ = \textbf{Number of Active Users}, defined as the total number of paying customers a company has at the end of the year.
+    
+    \item $x_3$ = \textbf{Customer Acquisition Cost (CAC)}, calculated as the average cost to acquire a new paying customer:
+    \[
+    x_3 = \frac{\text{Total Sales and Marketing Cost}}{\text{Number of New Customers Acquired}}
+    \]
+    
+    \item $x_4$ = \textbf{Percent of Users on Premium Plans}, which is the proportion of customers on paid plans:
+    \[
+    x_4 = \frac{\text{Number of Premium Plan Users}}{\text{Total Number of Users}} \times 100
+    \]
+    
+    \item $x_5$ = \textbf{Revenue Growth Rate}, measured as the percentage increase in total revenue compared to the previous year:
+    \[
+    x_5 = \frac{\text{Revenue}_{\text{Current Year}} - \text{Revenue}_{\text{Previous Year}}}{\text{Revenue}_{\text{Previous Year}}} \times 100
+    \]
+\end{itemize}
+
+All five features are expressed as real, non-negative values and are chosen to reflect meaningful aspects of SaaS company performance. Since all features are not categorical, we do not need to transform our features into numerical and dummified. 
+
+\section{Learning From Data}
+
+After we know about our features $(x_1, x_2, \dots, x_5)$, how do we best comnbine these features using machine, rule or function to produce the average monthly recurring revenue. We cannot solve with analytic approach as we don't know what kind of calculation to use for those features. So, we need to use empirical approach and in this case, we can use supervised learning using historical data. To present historical data in mathematically, we represent as $\mathbb{D}$. $\mathbb{D}$ is the matrix that include all the features and the response as columns and all the rows as data point. It has the dimension of $n \times p$ where $n$ is the number of rows or tuple or our data points and $p$ is the number of columns or features. In our case of SaaS companies, we can get the necessary data from financial institution with necessary cost to assess their data. Each row is a company data for $(x_1, x_2, \dots, x_5)$ and $y$. 
+
+Supervised learning is a machine learning technique or a process of finding a function that uses labeled datasets (historical data) to train algorithm models or function to identify the underlying patterns and relationships between input features and outputs. To learn this function, we use an algorithm that analyzes historical data, often known as training data and searches through a predefined set of possible functions, which is called the hypothesis set, to find the one that best fits the data according to some evaluation criteria. Mathematically, this can be expressed as:
+
+\[
+g = \mathcal{A}(\mathbb{D}, \mathcal{H})
+\]
+
+where $\mathcal{A}$ is the algorithm, $\mathbb{D}$ is the training dataset, $\mathcal{H}$ is the set of all candidate functions (the hypothesis space), and $g$ is the function that the algorithm selects as the best approximation of the true relationship between inputs and output. 
+
+As we talked that supervised learning is a machine learning technique, machine learning in general is a computer takes huge amount of data and using that data, it will find a pattern and learn about the data without being programmed what to do or analytic approach. It is an important learning because humans take a lot of time or sometimes impossible to find a pattern in the million or billion of data points whereas a computer can perform a lot faster than a human can do. 
+
+Before we move on, we need to be aware of stationarity. Stationarity is a state that the real cause $t$ and casual drivers $t(z_1, z_2, \dots, z_q)$ and the function$f$ and its features $(x_1, x_2, \dots, x_p)$ do not change over the period. When we take a look about our phenomenon (AMRR) and its casual drivers and the function$f$ and its features $(x_1, x_2, \dots, x_5)$, it can change over the time as there must be other non-stationary factors that effects a revenue of a company such as the politics, economics or natural disaster. If our $t$ and $f$ always change, our $g$ will drift. So, we are going to assume stationarity throughout our modeling. 
+
+We now examine the hypothesis space $\mathcal{H}$ in detail. $\mathcal{H}$ is the set of all candidate functions, $h$ which we consider to approximate $f$, the optimal function. Within $\mathcal{H}$, there is an optimal function that approximate to $f$ and we call it $h^*$. Since it is an approximation to $f$, there is an error and we call it, \textbf{misspecificatoin error} ($h^* - f$). Now, we can write in mathematical equation.
+
+\[
+y = t(z_1, z_2, \dots, z_q) = f(x_1, x_2, \dots, x_p) + \delta = h^*(x_1, x_2, \dots, x_p) + \epsilon
+\]
+
+However, it is impossible to find the best optimal function $h^*$. So, we need to find a way to approximate function which we will call it $g$ that is close to $h^*$ and supervised learning comes in. As we talk before, to find $g$, we use historical data $\mathbb{D}$ and the candidate set $\mathcal{H}$ and put them into an algorithm. The algorithm will give you the best possible approximate function $g$. Since we cannot find $h^*$ and, $g$ is just an approximation to it, we have \textbf{estimation error} ($g-h^*$). Then, we will define $e$ as a residual error which include all three errors (ignorance error, misspecification error, estimation error). We can update our mathematical equation as following
+
+\[
+y = t(z_1, z_2, \dots, z_q) = f(x_1, x_2, \dots, x_p) + \delta = h^*(x_1, x_2, \dots, x_p) + \epsilon = g(x_1, x_2, \dots, x_p) + e
+\]
+
+\subsection{The Set of Candidate Functions $\mathcal{H}$ Our Model} 
+
+Previously, we define the set of Candidate Functions $\mathcal{H}$ in general and we are going to examine how we are going to define our candidate functions set for average monthly recurring revenue. What the set $\mathcal{H}$ looks like will depend on a hypothesized relationship between our features and output metric. In SaaS companies, the number of active users is mostly positive correlated to average monthly recurring revenue. When you take a look into some SaaS companies like zoom, dropbox or saleforce, even though they have free version, if there is more users, more of the users buy their premium services. Since they are correlated, they have a linear relationship between them and they are the simplest to start with. You can also imagine a line tracing through a graph of number of active user and its average monthly recurring revenue. We could represent such a relationship mathematically as follows:
+
+\[
+h(x_2) = b_0 + b_2x_2
+\]
+If we restricted ourselves to this feature $x_2$ only, our candidate set would be:
+
+\[
+\mathcal{H} = \{w_0 + w_2x_2: w_0,w_2\} \in \mathbb{R}
+\]
+all possible lines representing the linear relationship between the number of active user and average MRR. 
+
+However, when you recall, we selected more than one feature for use in our model and naturally we would want to include all of them in the same way. We could generalize our $\mathcal{H}$ to be the best of hyperplane, which is a fancy math term for a plan in higher dimensions:
+
+\[
+\mathcal{H} = \{\mathbf{b} \cdot \mathbf{x}: w_0, w_1, \dots, w_5 \space \in \mathbb{R}\} = \{w_0 + w_1x_1 + \dots + w_5x_5:w_0, w_1, \dots, w_5 \space \in \mathbb{R} \}
+\]
+
+$w$'s are the weight of each feature meaning that how strong this feature relationship with the average MRR is. We can represent perfect weight with each feature as following where $\beta$ represents the perfect weight:
+
+\[
+h^*  = \beta_0 + \beta_1x_1+ \beta_2x_2 + \beta_3x_3 + \beta_4x_4 + \beta_5x_5
+\]
+
+
+However, it is impossible to find the perfect weight for each feature. That's why supervised learning comes in. Supervised learning will search through $\mathcal{H}$ and return a best guess at the value of each $\mathbf{b}$ and return a $\hat{\mathbf{b}}$ which tell us approximately how much changes to each feature measurement contributes generally to our response metric of interest. To run this "search" on our $\mathcal{H}$, we need training data to analyze.
+
+\subsection{Training data $\mathbb{D}$}
+
+In the beginning of the Section 4, we talked briefly about historical data $\mathbb{D}$ and now we are going to set up $\mathbb{D}$ for the training. 
+
+
+
+
+\end{document}
