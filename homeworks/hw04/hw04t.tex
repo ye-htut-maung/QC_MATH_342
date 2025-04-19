@@ -1,0 +1,730 @@
+\documentclass[12pt]{article}
+
+\include{preamble}
+
+\newtoggle{professormode}
+%\toggletrue{professormode} %STUDENTS: DELETE or COMMENT this line
+
+
+
+\title{MATH 342W / 642 / RM 742 Spring \the\year~ HW \#4}
+
+\author{Ye Htut Maung} %STUDENTS: write your name here
+
+\iftoggle{professormode}{
+\date{Due 11:59PM April 21 \\ \vspace{0.5cm} \small (this document last updated \currenttime~on \today)}
+}
+
+\renewcommand{\abstractname}{Instructions and Philosophy}
+
+\begin{document}
+\maketitle
+
+\iftoggle{professormode}{
+\begin{abstract}
+The path to success in this class is to do many problems. Unlike other courses, exclusively doing reading(s) will not help. Coming to lecture is akin to watching workout videos; thinking about and solving problems on your own is the actual ``working out.''  Feel free to \qu{work out} with others; \textbf{I want you to work on this in groups.}
+
+Reading is still \textit{required}. You should be googling and reading about all the concepts introduced in class online. This is your responsibility to supplement in-class with your own readings.
+
+The problems below are color coded: \ingreen{green} problems are considered \textit{easy} and marked \qu{[easy]}; \inorange{yellow} problems are considered \textit{intermediate} and marked \qu{[harder]}, \inred{red} problems are considered \textit{difficult} and marked \qu{[difficult]} and \inpurple{purple} problems are extra credit. The \textit{easy} problems are intended to be ``giveaways'' if you went to class. Do as much as you can of the others; I expect you to at least attempt the \textit{difficult} problems. 
+
+This homework is worth 100 points but the point distribution will not be determined until after the due date. See syllabus for the policy on late homework.
+
+Up to 7 points are given as a bonus if the homework is typed using \LaTeX. Links to instaling \LaTeX~and program for compiling \LaTeX~is found on the syllabus. You are encouraged to use \url{overleaf.com}. If you are handing in homework this way, read the comments in the code; there are two lines to comment out and you should replace my name with yours and write your section. The easiest way to use overleaf is to copy the raw text from hwxx.tex and preamble.tex into two new overleaf tex files with the same name. If you are asked to make drawings, you can take a picture of your handwritten drawing and insert them as figures or leave space using the \qu{$\backslash$vspace} command and draw them in after printing or attach them stapled.
+
+The document is available with spaces for you to write your answers. If not using \LaTeX, print this document and write in your answers. I do not accept homeworks which are \textit{not} on this printout. Keep this first page printed for your records.
+
+\end{abstract}
+
+\thispagestyle{empty}
+\vspace{1cm}
+NAME: \line(1,0){380}
+\clearpage
+}
+
+
+\problem{These are questions about Silver's book, chapters 7--11. You can skim chapter 10 as it is not so relevant for the class. For all parts in this question, answer using notation from class (i.e. $t ,f, g, h^*, \delta, \epsilon, e, t, z_1, \ldots, z_t, \mathbb{D}, \mathcal{H}, \mathcal{A}, \mathcal{X}, \mathcal{Y}, X, y, n, p, x_{\cdot 1}, \ldots, x_{\cdot p}$, $x_{1 \cdot}, \ldots, x_{n \cdot}$, etc.) as well as in-class concepts (e.g. simulation, validation, overfitting, etc) and also we now have $f_{pr}, h^*_{pr}, g_{pr}, p_{th}$, etc from probabilistic classification as well as different types of validation schemes).
+
+Note: I will not ask questions in this assignment about Bayesian calculations and modeling (a large chunk of Chapters 8 and 10) as this is the subject of Math 341/343. We also won't cover chapters 12-13 and the conclusion on the homework.}
+
+
+\begin{enumerate}
+
+\easysubproblem{Why are flu fatalities hard to predict? Which type of error is most dominant in the models?}\spc{1}
+
+Flu fatalities are hard to predict due to limited and flawed early data, reliance on extrapolations from small samples, and inaccurate reporting. Developing countries like Mexico have neither the sophisticated reporting systems of the United States nor a culture of going to the doctor at the first sign of illness;58 that the disease spread so rapidly once the United States imported it suggests that there might have been thousands, perhaps even tens of thousands, of mild cases of the flu in Mexico that had never become known to authorities.
+
+\easysubproblem{In what context does Silver define extrapolation and what term did he use? Why does his terminology conflict with our terminology?}\spc{1}
+
+Silver defines extrapolation as following. Extrapolation is a very basic method of prediction. It simply involves the assumption that the current trend will continue indefinitely, into the future. His terminology conflicts with our terminology because in our terminology, if the prediction features is out of the range, which means it is lower than our minimum feature or higher than our maximum, we called it extrapolation. 
+
+\easysubproblem{Give a couple examples of extraordinary prediction failures (by vey famous people who were considered heavy-hitting experts of their time) that were due to reckless extrapolations.}\spc{1}
+
+In 1682, English economist, Sir William Petty predict the growth of the population. Since the growth rate in the human population was fairly slow in the seventeenth century, he incorrectly predicted that the global population might be just over 700 million people in 2012 whereas the real population surpassed seven billion in late 2011. He predicted way ahead the time based on what he had in 1600s. Another example is, The controversial 1968 book The Population Bomb, by the Stanford biologist Paul R. Ehrlich and his wife, Anne Ehrlich, made the opposite mistake, quite wrongly predicting that hundreds of millions of people would die from starvation in the 1970s. However, in the future, because women get more job opportunities and it makes the fertility rate down.
+
+
+\easysubproblem{Using the notation from class, define \qu{self-fulfilling prophecy} and \qu{self-canceling prediction}.}\spc{1}
+
+A self-fulfilling prophecy is when the prediction $\hat{y}$ becomes a feature $x_j$ in the future, and people act in ways that make $y \approx \hat{y}$ true.
+
+A self-canceling prediction is when $\hat{y}$ becomes part of $\mathbf{x}$, but people change their behavior to avoid the predicted outcome, so $y \ne \hat{y}$.
+
+\easysubproblem{Is the SIR model of infectious disease under or overfit? Why?}\spc{1}
+
+The SIR model is underfit because it has a lot of assumptions and generalizes many things. They are equally susceptible to a disease, equally likely to be vaccinated for it, and that they intermingle with one another at random. There are no dividing lines by race, gender , age, religion, sexual orientation, or creed; everybody behaves in more or less the same way. In real life, people don't behave the same way.
+
+\easysubproblem{What did the famous mathematician Norbert Weiner mean by \qu{the best model of a cat is a cat}?}\spc{1}
+
+It means that all models are simplifications of the universe, so they inevitably lose some complexity and detail from the real world. If you build a model of a cat, it can never fully capture everything about a real cat—its behavior, biology, and uniqueness. The only perfect model of a cat is the real cat itself.
+
+\easysubproblem{Not in the book but about Norbert Weiner. From Wikipedia: 
+
+\begin{quote}
+Norbert Wiener is credited as being one of the first to theorize that all intelligent behavior was the result of feedback mechanisms, that could possibly be simulated by machines and was an important early step towards the development of modern artificial intelligence.
+\end{quote}
+
+What do we mean by \qu{feedback mechanisms} in the context of this class?}\spc{2}
+
+In the context of this class, feedback mechanisms refer to how a system uses the results of its actions to improve future decisions. In CART (Classification and Regression Trees), feedback happens during the tree-building process. At each step, the algorithm tries different ways to split the data and measures how well each split separates the target labels. It uses this performance as feedback to choose the best split. 
+
+
+\easysubproblem{I'm not going to both asking about the bet that gave Bob Voulgaris his start. But what gives Voulgaris an edge (p239)? Frame it in terms of the concepts in this class.}\spc{1}
+
+What gives Voulgaris an edge is that he treats sports betting like a formal modeling problem. He built a model $g$ to approximate the true function $f$ that maps game data to betting outcomes. He takes every good features that can approximate to $f$ such as tweets, some live, some tape or some press conference. By doing that, he has a thousand little secrects, quanta of information. Then, he uses them in a program to simulate the outcome of each game. But, he relies on it only if it suggests he has a very clear edge or it is supplemented by other information. 
+
+\easysubproblem{Why do you think a lot of science is not reproducible?}\spc{1}
+
+I think a lot of science is not reproducible because researchers often test many hypotheses without properly accounting for false positives.  That means that their hypotheses are found by luck and not consistent and that makes not reproducible. They ignore prior probabilities and uncertainty so even random patterns can look like real discoveries.
+
+\easysubproblem{Why do you think Fisher did not believe that smoking causes lung cancer?}\spc{1}
+
+I think Fisher did not believe that smoking causes lung cancer because he argued it was a classic case of mistaking correlation for causation. He even compared it to spurious correlations, like apple imports and marriage rates, to suggest there might be a hidden third factor such as genetics influencing both smoking and cancer.
+
+\easysubproblem{Is the world moving more in the direction of Fisher's Frequentism or Bayesianism?}\spc{1}
+
+I think the world is moving more in the direction of Bayesianism because Bayesian thinking allows us to update our beliefs with new data in fiields that involve uncertainty and prediction.
+
+\easysubproblem{How did Kasparov defeat Deep Blue? Can you put this into the context of over and underfiting?}\spc{1}
+
+Kasparov defeated Deep Blue by making a move that Deep Blue hasn't seen before. By doing that, since Deep Blue is trained on historical data, it only does well when it sees the move but it did terrible when it faces a new move. That is an example of overfitting. It performs well on training data but poorly on unseen data because it lacks generalization. 
+
+\easysubproblem{Why was Fischer able to make such bold and daring moves?}\spc{1}
+
+Because he was young, creative and he did not follow the norms as many normal chess players have norms about what you should do and not. With the big restriction of norms, many people cannot think creatively like Fisher did. In the text, it also says that "perhaps it was for exactly that reason that he found the moves: he had the full breadth of his imagination at his disposal.
+
+\easysubproblem{What metric $y$ is Google predicting when it returns search results to you? Why did they choose this metric?}\spc{1}
+
+"which results you will find most useful" or relevant to a user is a $y$ metric Google is predicting when it returns search results to you. Sine usefulness is subjective and hard to predict or measure directly, Google uses human rater website like Page Rank to evaluate search results and approximate what you might like. The reason they use metric from Page Rank is that they don't exactly know what is useful to the user.
+
+
+\easysubproblem{What do we call Google's \qu{theories} in this class? And what do we call \qu{testing} of those theories?}\spc{1}
+
+Google’s theories are called candidate functions, denoted by h $\in $$\mathcal{H}$. These are different possible functions or models that Google might use to predict the usefulness of a search result (the metric y). 
+
+Testing those theories is called validation. We can use oosRMSE or more stable error metrics like cross valadation.
+
+\easysubproblem{p315 give some very practical advice for an aspiring data scientist. There are a lot of push-button tools that exist that automatically fit models. What is your edge from taking this class that you have over people who are well-versed in those tools?}\spc{1}
+
+The edge from taking this class is that we gain a deeper understanding of how modeling tools actually work. Instead of just applying them blindly, we learn when and where they are appropriate to use. This allows us to outperform in situations where others rely too heavily on automated tools and fall into bad habits, poor incentives, or shallow modeling approaches.
+
+\easysubproblem{Create your own 2$\times$2 luck-skill matrix (Fig. 10-10) with your own examples (not the ones used in the book).}\spc{2}
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+ & \textbf{Low Luck} & \textbf{High Luck} \\
+\hline
+\textbf{Low Skill} & Snake and Ladder & UNO \\
+\hline
+\textbf{High Skill} & Go & Blackjack \\
+\hline
+\end{tabular}
+\end{center}
+
+
+\easysubproblem{[EC] Why do you think Billing's algorithms (and other algorithms like his) are not very good at no-limit hold em? I can think of a couple reasons why this would be.}\spc{2}
+
+I think it is because no-limit games have fewer repeated patterns which makes it harder to learn good strategies from limited data.
+
+\easysubproblem{Do you agree with Silver's description of what makes people successful (pp326-327)? Explain.}\spc{2}
+
+Yes, I agree with Silver's description of what makes people successful because I also believe that success is your hard work, your natural talent(what you are good or interested) and your environment (or luck) (where you born, what kind of parent did you have and how you grow up.) But when we cannot see those things, we determined by what they own or achieve which I will call obvious signal. However, you should not forget some signals from the noise too.
+
+\easysubproblem{Silver brings up an interesting idea on p328. Should we remove humans from the predictive enterprise completely after a good model has been built? Explain}\spc{2}
+
+I don't think we should remove humans from the predictive enterprise completely after a good model has been built because the world is always changing and most of the things that we predict is not stationary. Moreover, a good model could make a mistake or may be they haven't captured things that will happen in the future which give humans give more advantage as we have the ability of self awareness or recognize that which things are in control or not even though we are imperfect creatures living in an uncertain world.
+
+\easysubproblem{According to Fama, using the notation from this class, how would explain a mutual fund that performs spectacularly in a single year but fails to perform that well in subsequent years?}\spc{1}
+
+The first reason I think is that the stock market is not stationary and always changing which mean that the candidate set and the algorithm is always changing. So, you will have high misspecification error when you try to predict in the future. Another reason is that you are predicting in the extrapolate area which the model usually act wiredly and give you more estimation error.
+
+\easysubproblem{Did the Manic Momentum model validate? Explain.}\spc{1}
+
+I don't think the Manic Momentum model validated. The reason is that the Stock Market trend that he based on is no longer the same as nowadays. Also, the model doesn't update with new data. Moreover, you include the transition fee, your model perform worst. 
+
+\easysubproblem{Are stock market bubbles noticable while we're in them? Explain.}\spc{1}
+
+Yes, I think stock market bubbles are noticeable while we’re in them, because the text mentions that “simply looking at periods when the stock market has increased at a rate much faster than its historical average can give you some inkling of a bubble.” This means that by comparing current growth rates to historical trends, we can often recognize when prices are inflated beyond reason.
+
+\easysubproblem{What is the implication of Shiller's model for a long-term investor in stocks?}\spc{1}
+
+Shiller’s model suggests that long-term stock returns depend on valuation. When stocks are expensive (high P/E), future returns tend to be lower. So, for long-term investors, the model advises caution during high-valuation periods and sets realistic return expectations. 
+
+\easysubproblem{In lecture one, we spoke about \qu{heuristics} which are simple models with high error but extremely easy to learn and live by. What is the heuristic Silver quotes on p358 and why does it work so well?}\spc{1}
+
+The heuristic Silver quotes is: “Follow the crowd, especially when you don’t know any better.”
+It works well because it leverages the wisdom of crowds when many independent people make predictions, their collective judgment is often more accurate than any single person’s. This rule helps avoid costly mistakes when you lack unique information or deep analysis.
+
+\easysubproblem{Even if your model at predicting bubbles turned out to be good, what would prevent you from executing on it?}\spc{1}
+
+Even if your model for predicting bubbles is good, executing on it is extremely risky. Bubbles can take a long time to burst, and betting against them is like shorting an overvalued stock whic can lead to massive losses. For example, shorting InfoSpace in 1999 could’ve lost you nearly 20 times your investment, even though the price eventually crashed. Investors may also face high interest rates, margin calls, or be forced to close positions early. As Keynes put it, “The market can stay irrational longer than you can stay solvent.” So even with a correct forecast, acting on it is often financially and psychologically unsustainable.
+
+\easysubproblem{How can heuristics get us into trouble?}\spc{5}
+
+Heuristics can get us into trouble when we rely on them blindly in situations where they don’t apply. Because they are simple rules, they ignore nuance and context, which can lead to systematic errors. For example, following the crowd can lead to herding behavior, where people reinforce each other’s mistakes like in market bubbles
+
+
+
+\end{enumerate}
+
+
+\problem{These are some questions related to probability estimation modeling. Let $X$ denote the design matrix with $n$ rows and $p+1$ columns (with the first column being $\onevec_n$ and the other columns being linearly independent predictors) and $\y$ is the binary response vector of size $n$ and use this notation throughout your responses.}
+
+\begin{enumerate}
+
+\easysubproblem{What is $g_0$ if you are modeling probability estimates?}\spc{1}
+
+$g_0$ is $\bar{y}$ which is the propotion of 1's (in $\mathbb{D}$) of the $n$ observations
+
+\easysubproblem{What is $\mathcal{H}_{pr}$ for the probability estimation algorithm that employs the linear model in the covariates with logistic link function?}\spc{3}
+
+\[
+\mathcal{H}_{\text{pr}} = \{ \frac{1}{1+e^{-\bv{w} \cdot \bv{x}}} \;:\; \bv{w} \in \mathbb{R}^{p+1}  \}
+\]
+
+\easysubproblem{What is $\mathcal{H}_{pr}$ for the probability estimation algorithm that employs the linear model in the covariates with cloglog link function?}\spc{5}
+
+\[
+\mathcal{H}_{\text{pr}} = \{ 1-e^{-e^{\bv{w} \cdot \bv{x}}} \;:\; \bv{w} \in \mathbb{R}^{p+1}  \}
+\]
+
+\easysubproblem{Let $\mathcal{A} : \b = \argmax_{\bv{w} \in \reals^{p+1}}\braces{\ldots}$. Derive the expression that replaces the $\ldots$ which will be a function of $X, \y, \bv{w}, n$. Note: this algorithm fits a \qu{logistic regression}. }\spc{6}
+
+\[
+\mathcal{A} : \b = \argmax_{\bv{w} \in \reals^{p+1}} \{ P(\mathbb{D}) \}
+\]
+
+\[
+P(\mathbb{D}) = P( Y_1 = y_1, Y_2 = y_2, \ldots, Y_n = y_n \;|\; \bv{x}_1, \bv{x}_2, \ldots, \bv{x}_n )
+\]
+
+\[
+= \prod_{i=1}^{n} P(Y_i = y_i \mid \bv{x}_i)
+\]
+
+\[
+= \prod_{i=1}^{n} f_{\text{pr}}(\bv{x}_i)^{y_i} (1 - f_{\text{pr}}(\bv{x}_i))^{1 - y_i}
+\quad \text{(Since } P(v) = p^v (1 - p)^{1 - v} \text{)}
+\]
+
+\[
+\approx \prod_{i=1}^{n} \left( \frac{1}{1 + e^{-\bv{w} \cdot \bv{x}_i}} \right)^{y_i}
+\left( \frac{1}{1 + e^{\bv{w} \cdot \bv{x}_i}} \right)^{1 - y_i}
+\quad \text{(since the logistic function is } \frac{1}{1 + e^{-\bv{w} \cdot \bv{x}}} \text{)}
+\]
+
+\easysubproblem{Why is logistic regression an example of a \qu{generalized linear model} (glm)?}\spc{2}
+
+because we use $\bv{w} \cdot \x$ as an argument for the link function which is logit. Since we are using a linear model inside one of the link function and we can also use the linear model in another link function. That is why logistic regression is an example of glm.
+
+\easysubproblem{Consider $\x_*$ to be a new unit. For its prediction, the probability estimate that $y_*=1$ is 37\%, what is the log odds of $y_*=1$?}\spc{2}
+
+
+The probability estimate that $y_*$ = 1 is 37\%.
+The log-odds of $y_*$ = 1 is:
+
+\[
+\hat{p} = 0.37
+\]
+
+\[
+\ln\left( \frac{\hat{p}}{1 - \hat{p}} \right) = \ln\left( \frac{0.37}{1 - 0.37} \right) = \ln\left( \frac{0.37}{0.63} \right) \approx -0.5322
+\]
+
+\easysubproblem{If, $\x_*\b = 3.1415$ where $\b$ is the result of the logistic regression fit, what is the probability estimate that $y_*=1$?}\spc{2}
+
+The probability estimate that $y_* = 1$ is 95.86\%.
+
+\intermediatesubproblem{If, $\x_*\b = 3.1415$ where $\b$ is the result of the probit regression fit, what is the probability estimate that $y_*=1$?}\spc{2}
+
+Since probit regression is the CDF of the standard normal r.v.,
+
+\[
+\Phi(\vec{x}_* \cdot \vec{b}) = \Phi(3.1415) = 0.9992 \quad (\text{by putting in calculator})
+\]
+
+\easysubproblem{In probability estimation modeling, what is the formula for the Brier Score performance metric? Prove the Brier score is always non-positive.}\spc{2}
+
+\[
+s_i := -( y_i - \hat{p}_i )^2
+\]
+\[
+\bar{s} := \frac{1}{n} \sum_{i=1}^n s_i \leq 0
+\]
+
+To prove the Brier Score is always non-positive, we find the best and worst Brier Scores.
+
+\textbf{Best Scenario:} when \( \hat{p}_i = y_i \)
+
+\[
+s_i = -(y_i - y_i)^2 = 0
+\]
+\[
+\bar{s} = \frac{1}{n} \sum_{i=1}^n 0 = 0
+\]
+
+\textbf{Worst Scenario:} when \( \hat{p}_i = 1 - y_i \)
+
+\[
+s_i = -(y_i - (1 - y_i))^2  = -1
+\]
+\[
+\bar{s} = \frac{1}{n} \sum_{i=1}^n (-1) = \frac{1}{n} \cdot (-n) = -1
+\]
+
+Since the Brier Score is always between \(0\) and \(-1\), it is always non-positive.
+
+\easysubproblem{In probability estimation modeling, what is the formula for the Log Scoring Rule performance metric? Prove the Log Scoring Rule is always non-positive.}\spc{2}
+
+\[
+s_i := y_i \ln(\hat{p}_i) + (1 - y_i) \ln(1 - \hat{p}_i)
+\]
+\[
+\bar{s} := \frac{1}{n} \sum_{i=1}^n s_i
+\]
+
+To prove that the log scoring rule is always non-positive:  
+Since \( \hat{p}_i \in (0, 1) \), and the natural log of any number less than 1 is negative,
+
+\[
+\ln(\hat{p}_i) < 0 \quad \text{and} \quad \ln(1 - \hat{p}_i) < 0
+\]
+
+Since \( y_i \in \{0, 1\} \), we have two cases:
+
+- If \( y_i = 1 \), then
+\[
+s_i = 1 \cdot \ln(\hat{p}_i) + 0 \cdot \ln(1 - \hat{p}_i) = \ln(\hat{p}_i) < 0
+\]
+
+- If \( y_i = 0 \), then
+\[
+s_i = 0 \cdot \ln(\hat{p}_i) + 1 \cdot \ln(1 - \hat{p}_i) = \ln(1 - \hat{p}_i) < 0
+\]
+
+So in both cases, \( s_i \leq 0 \), and therefore
+
+\[
+\bar{s} = \frac{1}{n} \sum_{i=1}^n s_i \leq 0
+\]
+
+Thus, the log scoring rule is always non-positive.
+
+\hardsubproblem{Generalize linear probability estimation to the case where $\mathcal{Y} = \braces{C_1, C_2, C_3}$, i.e. a nominal variable with $L=3$ levels.
+
+Assume the logistic link function. Write down the objective function that is argmax'd over the parameters (you define what these parameters are --- that is part of the question). Once you get the answer you can see how this easily goes to $L > 3$, an arbirtrary\footnote{Note: The algorithm for general $L$ is known as all of the following: \qu{multinomial logistic regression}, \qu{polytomous LR}, \qu{multiclass LR}, \qu{softmax regression}, \qu{multinomial logit} (mlogit), the \qu{maximum entropy} (MaxEnt) classifier, and the \qu{conditional maximum entropy model}. You can inflate your resume with lots of redundant jazzy terms by doing this one question!} number of response levels.\spc{16}}\pagebreak
+
+I watched some video about softmax regression so I will explain how you can get multinomial logistic regression
+
+Let each observation have a scalar input feature $x \in \mathbb{R}$.  
+We model the category scores linearly as:
+
+\[
+z_1' = 0 \quad \text{(baseline class)}
+\]
+\[
+z_2' = \alpha_2 + \beta_2 \cdot x
+\]
+\[
+z_3' = \alpha_3 + \beta_3 \cdot x
+\]
+
+Let’s say for a given observation, the input is $x = x^*$, then:
+
+\[
+z_2' = \alpha_2 + \beta_2 \cdot x^*
+\]
+\[
+z_3' = \alpha_3 + \beta_3 \cdot x^*
+\]
+
+We now use the softmax function to convert the category scores into valid probabilities that sum to 1:
+
+\[
+s(z_1') = \frac{1}{1 + e^{z_2'} + e^{z_3'}} = \frac{1}{1 + e^{\alpha_2 + \beta_2 x^*} + e^{\alpha_3 + \beta_3 x^*}}
+\]
+
+\[
+s(z_2') = \frac{e^{z_2'}}{1 + e^{z_2'} + e^{z_3'}} = \frac{e^{\alpha_2 + \beta_2 x^*}}{1 + e^{\alpha_2 + \beta_2 x^*} + e^{\alpha_3 + \beta_3 x^*}}
+\]
+
+\[
+s(z_3') = \frac{e^{z_3'}}{1 + e^{z_2'} + e^{z_3'}} = \frac{e^{\alpha_3 + \beta_3 x^*}}{1 + e^{\alpha_2 + \beta_2 x^*} + e^{\alpha_3 + \beta_3 x^*}}
+\]
+
+
+These give the predicted probabilities for class $C_1$, $C_2$, and $C_3$ respectively.  
+The softmax formulation ensures that all probabilities are between 0 and 1 and that they sum to 1.
+
+
+
+
+For the next two questions, let $n_1 := \sum \indic{y_i = 1}$ and $n_0 := \sum \indic{y_i = 0}$ so that $n = n_0 + n_1$. Then assume $n_1 \neq n_0$. This is equivalent to letting $n_1 = cn$ and $n_0 = (1-c)n$ and assuming $c \in [0,1]/\braces{\half}$.
+
+
+
+\intermediatesubproblem{[MA] Prove the Brier score is always higher for $g_0$ vs the model where you set $\hat{p_i} = \half$ for all $i$. Hint: $(1-c)c < \half$ for $c \in [0,1]/\braces{\half}$. }\spc{7}
+
+\hardsubproblem{[MA] Prove the Log Scoring Rule is always higher for $g_0$ vs the model where you set $\hat{p_i} = \half$ for all $i$.}\spc{10} %Hint: $c^c(1-c)^{1-c} > \half$ for $c \in [0,1]/\braces{\half}$.
+
+
+\end{enumerate}
+
+
+\problem{These are some questions related to polynomial-derived features and logarithm-derived features in use in OLS regression.}
+
+\begin{enumerate}
+
+\intermediatesubproblem{What was the overarching problem we were trying to solve when we started to introduce polynomial terms into $\mathcal{H}$? What was the mathematical theory that justified this solution? Did this turn out to be a good solution? Why / why not?}\spc{3}
+
+The overarching problem we were trying to solve when we started to introduce polynomial terms introduce $\mathcal{H}$ was that not all the true functions are linear, they can be curve or polynomial which gives us big misspecification error. Stone–Weierstrass theorem justified this solution. Yes, this turned out to be a good solution because it proves that any continuous function in our case $f: \reals^p \xrightarrow{} \reals$ can be approximate by a sum of polynomials.
+
+\intermediatesubproblem{We fit the following model: $\yhat = b_0 + b_1 x + b_2 x^2$. What is the interpretation of $b_1$? What is the interpretation of $b_2$? Although we didn't yet discuss the \qu{true} interpretation of OLS coefficients, do your best with this.}\spc{4}
+
+The interpretation of $b_1$ is that it is a weight of x and it has a linear effect of $x$ on $\yhat$. The interpretation of $b_2$ is the weight of $x^2$ and it gives the curvature to the line when it necessary. If the data is linear line, $b_2$ value will be small.
+
+\hardsubproblem{Assuming the model from the previous question, if $x \in \mathcal{X} = \bracks{10.0, 10.1}$, do you expect to \qu{trust} the estimates $b_1$ and $b_2$? Why or why not?}\spc{7}
+
+No, We cannot expect to "trust" the estimates $b_1$ and $b_2$ if $x \in \mathcal{X} = \bracks{10.0, 10.1}$. The reason is that it doesn't give enough variation to $x$ which can easily lead to extrapolation. Also, since it is very close the $x^2$ will perfectly fit which lead to over fitting.
+
+\hardsubproblem{We fit the following model: $\yhat = b_0 + b_1 x_1 + b_2 \natlog{x_2}$. We spoke about in class that $b_1$ represents loosely the predicted change in response for a proportional movement in $x_2$. So e.g. if $x_2$ increases by 10\%, the response is predicted to increase by $0.1 b_2$. Prove this approximation from first principles.}\spc{6}
+
+\[
+\hat{y} = b_0 + b_1 x_1 + b_2 \ln(x_2)
+\]
+
+\[
+\Delta \hat{y} = \left(b_0 + b_1 x_1 + b_2 \ln(x_{2f})\right) - \left(b_0 + b_1 x_1 + b_2 \ln(x_{20})\right)
+\]
+
+\[
+= b_2 \ln(x_{2f}) - b_2 \ln(x_{20})
+\]
+
+\[
+= b_2 \left( \ln\left( \frac{x_{2f}}{x_{20}} \right) \right)
+\]
+
+\[
+\approx b_2 \left( \frac{x_{2f}}{x_{20}} - 1 \right)
+\]
+
+\[
+= b_2 \left( \frac{x_{2f} - x_{20}}{x_{20}} \right)
+\]
+
+Since \( \frac{x_{2f} - x_{20}}{x_{20}} \) is a proportional change,  
+if \( x_2 \) increases by 10\% (i.e., 0.1),  
+then the predicted response \( \hat{y} \) will increase by approximately \( 0.1 \times b_2 \).
+
+\easysubproblem{When does the approximation from the previous question work? When do you expect the approximation from the previous question not to work?}\spc{4}
+
+It only works when the proportional change in $x_2$ is small. This is because linear approximation of $ln(1 + x)$ is accurate when x is close to 0.
+
+It doesn't work well when the proportional change in $x_2$ is large. This is because the logarithmic function becomes more curved making the approximation inaccurate. 
+
+\intermediatesubproblem{We fit the following model: $\natlog{\yhat} = b_0 + b_1 x_1 + b_2 \natlog{x_2}$. What is the interpretation of $b_1$? What is the \emph{approximate} interpretation of $b_2$? Although we didn't yet discuss the \qu{true} interpretation of OLS coefficients, do your best with this.}\spc{2}
+
+\[
+\ln(\hat{y}) = b_0 + b_1 x_1 + b_2 \ln(x_2)
+\]
+
+Let \( x_2 \) be constant.
+
+\[
+\Delta \ln(\hat{y}) = \left( b_0 + b_1 x_{1f} \right) - \left( b_0 + b_1 x_{10} \right)
+\]
+\[
+\ln(\hat{y}_f) - \ln(\hat{y}_0) = b_1 x_{1f} - b_1 x_{10}
+\]
+\[
+\ln\left( \frac{\hat{y}_f}{\hat{y}_0} \right) = b_1 \Delta x_1
+\]
+\[
+\frac{\hat{y}_f - \hat{y}_0}{\hat{y}_0} \approx b_1 \Delta x_1
+\]
+
+The interpretation of \( b_1 \) is that if there is a one unit increase in \( x_1 \), then the predicted response \( \hat{y} \) changes by approximately \( b_1 \) proportionally.  
+For example, if \( b_1 = 0.37 \), then \( \hat{y} \) increases by 37\%.
+
+\vspace{1em}
+
+Now, let \( x_1 \) be constant.
+
+\[
+\Delta \ln(\hat{y}) = \left( b_0 + b_2 \ln(x_{2f}) \right) - \left( b_0 + b_2 \ln(x_{20}) \right)
+\]
+\[
+\frac{\hat{y}_f - \hat{y}_0}{\hat{y}_0} \approx b_2 \cdot \frac{x_{2f} - x_{20}}{x_{20}}
+\]
+
+To interpret \( b_2 \), if \( b_2 = 0.37 \), and \( x_2 \) increases by 27\%, then the predicted response increases by approximately \( 0.37 \times 0.27 \).
+
+\easysubproblem{Show that the model from the previous question is equal to $\yhat = m_0 m_1^{x_1} x_2^{b_2}$ and interpret $m_1$.}\spc{2}
+
+\[
+\ln(\hat{y}) = b_0 + b_1 x_1 + b_2 \ln(x_2)
+\]
+
+\[
+\hat{y} = e^{b_0} \cdot e^{b_1 x_1} \cdot e^{b_2 \ln(x_2)}
+\]
+
+\[
+\hat{y} = e^{b_0} \cdot (e^{b_1})^{x_1} \cdot (e^{\ln(x_2)})^{b_2}
+\]
+
+\[
+\hat{y} = m_0 \cdot m_1^{x_1} \cdot x_2^{b_2}
+\quad \text{where } m_0 = e^{b_0}, \; m_1 = e^{b_1}
+\]
+
+\vspace{1em}
+
+\( m_1 \) is the multiplicative factor by which \( \hat{y} \) changes when \( x_1 \) increases by 1 unit.  
+For example, if \( m_1 = 1.5 \), then a one-unit increase in \( x_1 \) causes a 50\% increase in \( \hat{y} \).
+
+\end{enumerate}
+
+
+
+\problem{These are some questions related to extrapolation.}
+
+\begin{enumerate}
+
+\easysubproblem{Define extrapolation and describe why it is a net-negative during prediction.}\spc{3}
+
+Extrapolation is when the model is predicting outside of the range of minimum and maximum of features and it gives you wired response. It is a net-negative during prediction because for instance, if you are predicting the height of people by age which $x \in \{0,100\}$, you can put your model negative number or greater than 100. In general, if you feature has a range from 1 to 10 and you are predicting 20 or 40, which your model hasn't seen before, then you are extrapolating and it will not give you useful response.
+
+\easysubproblem{Do models extrapolate differently? Explain.}\spc{3}
+
+Yes. Depending on different $\mathcal{H}$ and $\mathcal{A}$, you will get different extrapolation. For example, if your true function is linear and your $\mathcal{H}$ is polynomial power of 3, outside of the feature range, it will shoot all the way up from one end and all the way down from another end. If your true function is linear and your $\mathcal{H}$ is also linear, if you try to predict negative number while the feature range is positive, you will get different wired interpretation.
+
+\easysubproblem{Why do polynomial regression models suffer terribly from extrapolation?}\spc{3}
+
+Because outside of the range of features, they extremely change increase or decrease. The more degree you have, the worst performance you will get when you leave your input space.
+
+\end{enumerate}
+
+%
+%\problem{These are some questions related to polynomial-derived features and logarithm-derived features in use in OLS regression.}
+%
+%\begin{enumerate}
+%
+%\intermediatesubproblem{What was the overarching problem we were trying to solve when we started to introduce polynomial terms into $\mathcal{H}$? What was the mathematical theory that justified this solution? Did this turn out to be a good solution? Why / why not?}\spc{3}
+%
+%\intermediatesubproblem{We fit the following model: $\yhat = b_0 + b_1 x + b_2 x^2$. What is the interpretation of $b_1$? What is the interpretation of $b_2$? Although we didn't yet discuss the \qu{true} interpretation of OLS coefficients, do your best with this.}\spc{4}
+%
+%\hardsubproblem{Assuming the model from the previous question, if $x \in \mathcal{X} = \bracks{10.0, 10.1}$, do you expect to \qu{trust} the estimates $b_1$ and $b_2$? Why or why not?}\spc{7}
+%
+%\hardsubproblem{We fit the following model: $\yhat = b_0 + b_1 x_1 + b_2 \natlog{x_2}$. We spoke about in class that $b_1$ represents loosely the predicted change in response for a proportional movement in $x_2$. So e.g. if $x_2$ increases by 10\%, the response is predicted to increase by $0.1 b_2$. Prove this approximation from first principles.}\spc{7}
+%
+%\easysubproblem{When does the approximation from the previous question work? When do you expect the approximation from the previous question not to work?}\spc{2}
+%
+%\intermediatesubproblem{We fit the following model: $\natlog{\yhat} = b_0 + b_1 x_1 + b_2 \natlog{x_2}$. What is the interpretation of $b_1$? What is the interpretation of $b_2$? Although we didn't yet discuss the \qu{true} interpretation of OLS coefficients, do your best with this.}\spc{3}
+%
+%\easysubproblem{Show that the model from the previous question is equal to $\yhat = m_0 m_1^{x_1} x_2^{b_2}$ and interpret $m_1$.}\spc{2}
+%
+%\end{enumerate}
+
+\problem{These are some questions related to the model selection procedure discussed in lecture.}
+
+\begin{enumerate}
+
+\easysubproblem{Define the fundamental problem of \qu{model selection}.}\spc{6}
+
+The fundamental problem is that there are many different choices of models and each of them has trade off between complexity and fit. Since there are many ways to choose, selecting one best model that doesn't have overfit or underfit is the fundamental problem of science.
+
+\easysubproblem{Using two splits of the data, how would you select a model?}\spc{8}
+
+With two splits, you will have $\mathbb{D}_{train}$ and $\mathbb{D}_{test}$. You train each model on $\mathbb{D}_{train}$ which you will get $g_1, \dots, g_m$. Then, predict on $\mathbb{D}_{test}$ for all models to get $\bv{e_{test}}$ and now you can compute oosRMSE for each model. Then, select that model which has the lowest oosRMSE score.
+
+\easysubproblem{Discuss the main limitation with using two splits to select a model.}\spc{3}
+
+The main limitation using two splits to select a model is that we lose an esitmate of future predictrive performance which we can't test out of sample error for selected model. 
+
+\easysubproblem{Using three splits of the data, how would you perform model selection?}\spc{3}
+
+With two splits, you will have $\mathbb{D}_{train}$, $\mathbb{D}_{select}$ and $\mathbb{D}_{test}$. Similar to two splits, you train each model on $\mathbb{D}_{train}$ which you will get $g_1, \dots, g_m$. Then, predict on $\mathbb{D}_{select}$ for all models to get $\bv{e_{select}}$. Now, you can compute oosRMSE for each model. Then, select that model ($m_*$) which has the lowest oosRMSE score which is $oosRMSE_m$. After that, we train $m_*$ using both $\mathbb{D}_{train}$ and $\mathbb{D}_{select}$ which will give you $g_{m_*}$ and compute $\bv{e}$ for $g_*$ on $\mathbb{D}_{test}$ can compute $oosRMSE_*$, which is the conservative estimate of future performance. Then, finally, you compute $g_{final}$ which use all $\mathbb{D}_{train}$, $\mathbb{D}_{select}$ and $\mathbb{D}_{test}$ with the model $m_*$.
+
+\easysubproblem{How does using both inner and outer folds in a double cross-validation nested resampling procedure improve the model selection procedure?}\spc{3}
+
+Let's take a look about how inner fold works. In the inner fold, we have $\mathbb{D}_{train}$ and $\mathbb{D}_{select}$. We will train each model on $\mathbb{D}_{train}$ and predict on $\mathbb{D}_{select}$ in our fist iteration of $K_{select}$. Then, we will do CV for K times. After that, we will compute oosRMSE for each model from the error vector that is obtained by predicting on $\mathbb{D}_{select}$. Then, we choose the model with smallest oosRMSE. After that, the selected model predicts on $\mathbb{D}_{test}$. 
+We will do that above steps for $K_test$ time which is the number of outer loop and in the end you will get an error vector with length of n that is predicted on $\mathbb{D}_{test}$. Now, you can compute oosRMSE from the error vector of $\mathbb{D}_{test}$.
+
+The outer folds improve by giving out of sample error metrics which is $\bv{e}$ that contains errors by predicting on $\mathbb{D}_{test}$ by knowing that error vector, can computer less variation oosRMSE.  The inner fold improve by finding the best model to test on $\mathbb{D}_{test}$ and it can also help to find $g_{final}$ by finding the best model and train with the whole $\mathbb{D}$.
+
+\easysubproblem{Describe how $g_{\text{final}}$ is constructed when using nested resampling on three splits of the data.}\spc{5}
+
+We run select CV again which is an inner loop for $K_{select}$ and you need to run for $m$ models. after that you will get $m$ number of $oosRMSE$ and choose the model that has the smallest $oosRMSE$. After that, with that using that model ($\mathcal{A}_{m_*}$ and $\mathcal{H}_{m_*}$, you train on the whole historical data $\mathbb{D}$ and you will get $g_{final}$
+
+\easysubproblem{Describe how you would use this model selection procedure to find hyperparameter values in algorithms that require hyperparameters.}\spc{3}
+
+As an example, recall SVM with the Vapnik Objective Function which has a hyperparameter $\lambda$. First, you need to aware that each different value of $\lambda$ results in a different $\mathcal{A}$. First, create a $\lambda_{grid}$ that contains all possible hyperparameters which is the same as all the possible model in previous model selection. Then, you can either use no CV, select CV or select and test CV depending on how well you model want to be, to find the best hyperparameter for your model. Note that there is trade off between computation and accuracy.
+
+\hardsubproblem{Given raw features $x_1, \ldots, x_{p_{raw}}$, produce the most expansive set of transformed $p$ features you can think of so that $p \gg n$.}\spc{3}
+
+\[
+\begin{array}{l}
+x_1, \dots, x_p \\
+x_1^2, \dots, x_p^2 \\
+x_1^3, \dots, x_p^3 \\
+\ln(x_1), \dots, \ln(x_p) \\
+x_1x_2, \dots, x_{p-1} x_p \\
+x_1 x_2 x_3, \dots, x_{p-2} x_{p-1} x_p\\
+\sin{x_1}, \dots, \sin{x_p} \\
+\end{array}
+\]
+
+You can increase all the exponent of polynomial, you can change the base of log, you can add multiple interaction as you like.
+
+\easysubproblem{Describe the methodology from class that can create a linear model on a subset of the transformed featuers (from the previous problem) that will not overfit.}\spc{10}
+
+I will explain using Greedy Foward Stepwise Modeling. When we start doing the algorithm, we use every features from the expensive set to test which one is the best first features of our model by training on $\mathbb{D}_{train}$ and predicting on $\mathbb{D}_{select}$. Then you will get oosRMSE for each. If our data are linear, it will give one of the features from $x_1, \dots, x_p$.(eg. you will get $x_1$.) So, put $x_1$ as your first feature in your candidate set. Then, remove that features and use p-1 features and do the same thing. In every step, the model choose one of the features from $x_1, \dots, x_p$. The model will run until a predetermined maximum or at each step, look visually at the result oosRMSE from $\mathbb{D}_{test}$ and when you are sure the oosRMSE from $\mathbb{D}_{select}$ is increasing, you stop. After you run the procedure, you will get a model that has only features from $x_1, \dots, x_p$.
+
+\end{enumerate}
+
+
+\problem{These are some questions related to the CART algorithms.}
+
+\begin{enumerate}
+ \easysubproblem{Write down the step-by-step $\mathcal{A}$ for regression trees.}\spc{7}
+
+ Start with $\mathbb{D}$
+
+Step 1: Consider every possible orthogonal-to-axis split
+Eg.
+ \[
+ x_1 \leq x_{\cdot 1(1)},  x_1 \leq x_{\cdot 1(2)}, \dots,  x_1 \leq x_{\cdot 1(n-1)} 
+ \]
+ \[\cdots\]
+ \[
+  x_p \leq x_{\cdot p(1)}, x_p \leq x_{\cdot p(2)}, \dots, x_p \leq x_{\cdot p(n-1)} 
+ \]
+
+Step 2: Pick the best split, i.e the one with the lowest error, where error is defined as: 
+
+\[
+SSE_{\text{weighted}} := \frac{n_L SSE_L + n_R SSE_R}{n_L + n_R}
+\]
+
+where $n_L$ is the number of observations in the left child,
+				$n_R$ is the number of observations in the right child, $SSE_L$
+				is the $SSE$ in the left child, and $SSR_R$ is the $SSE$ in
+				the right child. 
+
+Step 3: Repeat Steps 1-2 on the sub-$\mathbb{D}$ in all daughter nodes but stop when no observation in the node or the default is $N_0 = 5$
+
+
+
+\hardsubproblem{Describe $\mathcal{H}$ for regression trees. This is very difficult but doable. If you can't get it in mathematical form, describe it as best as you can in English.}\spc{7}
+
+\[
+\mathcal{H} = \left\{ \sum_{m=1}^{M} c_m \cdot \mathbb{I}_{x \in R_m} \ \middle| \ c_m = \text{average of } y_i \text{ such that } x_i \in R_m \right\}
+\]
+where 
+
+$R_m$: The $m$-th region (leaf) in the partition of the input space. These are created by splitting the feature space using axis-aligned cuts (like if $x_1 < 4.5$ go left, else go right).
+
+$\mathbb{I}_ {x \in R_m}$: The indicator function — it’s 1 if the input $x$ belongs to region $R_m$, and 0 otherwise
+
+\intermediatesubproblem{Think of another \qu{leaf assignment} rule besides the average of the responses in the node that makes sense.}\spc{3}
+
+I think we can use medium value in the node instead of the average. The median is more robust to outliers and gives a better central value when the data is wide spread.
+
+\intermediatesubproblem{Assume the $y$ values are unique in $\mathbb{D}$. Imagine if $N_0 = 1$ so that each leaf gets one observation and its $\yhat = y_i$ (where $i$ denotes the number of the observation that lands in the leaf) and thus it's very overfit and needs to be \qu{regularized}. Write up an algorithm that finds the optimal tree by pruning one node at a time iteratively. \qu{Prune} means to identify an inner node whose daughter nodes are both leaves and deleting both daughter nodes and converting the inner node into a leaf whose $\yhat$ becomes the average of the responses in the observations that were in the deleted daughter nodes. This is an example of a \qu{backwards stepwise procedure} i.e. the iterations transition from more complex to less complex models.}\spc{5}
+
+First, we split the dataset into $\mathbb{D}{\text{train}}$ and $\mathbb{D}{\text{test}}$.
+
+We begin with a fully grown tree where each leaf has one observation, so each prediction is $\hat{y} = y_i$. For this tree, we calculate the out-of-sample RMSE (oosRMSE) by predicting on $\mathbb{D}_{\text{test}}$ and summing the squared errors across all leaves.
+
+Next, we iteratively prune one internal node whose children are both leaves, replacing it with a single leaf whose $\hat{y}$ is the average of the two removed leaf responses. For each pruned tree, we compute the new oosRMSE on the test set.
+
+We continue this process until only the root node remains, tracking the oosRMSE at each step. Finally, we select the tree that achieves the lowest oosRMSE, as it balances fit and complexity best.
+
+To make this more robust, we can replace the train/test split with cross-validation, which provides a more stable estimate of the tree’s generalization error.
+
+
+
+
+\hardsubproblem{Provide an example of an $f(\x)$ relationship with medium noise $\delta$ where vanilla OLS would beat regression trees in oos predictive accuracy. Hint: this is a trick question.}\spc{1}
+
+For example, let's take a look if a $f(\x)$ is $3x+2$. with medium noise $y = 3x +2 + \delta$.
+
+If we use vanilla OLS, it will closely approximate the true function since it assumes a linear form. The model will have low bias, and because the function is truly linear, its oos error will also be low.
+
+On the other hand, regression trees will try to fit the data by making splits and assigning constant predictions (the average $y$ in each region). With medium noise, the tree can overfit this noise, especially since it’s not designed to assume linearity. This leads to high variance and worse oos performance compared to OLS.
+
+
+
+\easysubproblem{Write down the step-by-step $\mathcal{A}$ for classification trees. This should be short because you can reference the steps you wrote for the regression trees in (a).}\spc{4}
+
+Step 1: same as Regression tree in (a)
+
+Step 2: Similar to regression tree in (a) but the new error metric, which is called "Gihi" is defined as follow:
+
+\begin{align*}
+    G_{\text{neighbor, avg}} = \frac{n_L G_L + n_R G_R}{n_L + n_R}
+\end{align*}
+
+Let,
+
+\begin{align*}
+    G := \sum_{l=1}^{L}\hat{p}_\ell(1 - \hat{p}_\ell)
+\end{align*}
+
+where
+
+\begin{align*}
+    \hat{p}_\ell := \frac{
+        \text{number of observations with category $\ell$ in node}}
+    {\text{total number of observations in node}}
+\end{align*}
+
+
+where $\hat{p}_\ell$ is the proportion of observations of whose response is category $\ell$ in a given node
+
+Step 3: same as Regression tree in (a) but the default will be $N_0$ = 1
+
+
+\hardsubproblem{Think of another objective function that makes sense besides the Gini that can be used to compare the \qu{quality} of splits within inner nodes of a classification tree.}\spc{6}
+
+I think we can use misclassification error for the splitting. We can measure the proportion of incorrect predictions. First, You compute the mode in each of the two nodes created by the split. Then, for each node, you use that mode as the predicted class for all points in that node and compute the misclassification error. Finally, you take the weighted average (proportion) of the two misclassification errors (weighted by the number of samples in each node)
+
+
+\end{enumerate}
+
+
+
+
+
+
+
+
+\end{document}
+
+
+
+
+
+
