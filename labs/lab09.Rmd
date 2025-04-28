@@ -1,16 +1,29 @@
 ---
 title: "Lab 9"
-author: "Your Name Here"
+author: "Ye Htut Maung"
 output: pdf_document
 ---
 
+```{r}
+pacman::p_load(rJava, readr, stringr, pander, checkmate, ggplot2, gridExtra, R6, Bolstad2)
+pacman::p_install_gh("kapelner/YARF/YARFJARs", ref = "dev")
+pacman::p_install_gh("kapelner/YARF/YARF", ref = "dev", force = TRUE)
+pacman::p_load(YARF)
+```
 
 #Rcpp and optimizing R
 
 Write a function `dot_product_R` in R that takes in two vectors `v1` and `v2` and returns their dot product.
 
 ```{r}
-#TO-DO
+dot_product_R = function(v1, v2) {
+  dot_product = 0
+  for (i in 1: length(v1)) {
+    dot_product = dot_product + v1[i] * v2[i]
+  }
+  dot_product
+}
+
 ```
 
 Write a function `dot_product_cpp` in C++ and make sure it compiles.
@@ -18,7 +31,14 @@ Write a function `dot_product_cpp` in C++ and make sure it compiles.
 ```{r}
 cppFunction('
   double dot_product_cpp(NumericVector v1, NumericVector v2) {
-    #TO-DO
+    double dot_product = 0;
+    
+    for (int i = 0; i < v1.size(); i++) {
+      dot_product += v1[i] * v2[i];
+    }
+    
+    return dot_product;
+    
   }
 ')
 ```
@@ -41,7 +61,56 @@ microbenchmark(
 Implement the Gram Schmidt routine as a C++ function `gram_schmidt_cpp`.
 
 ```{r}
-#TO-DO
+cppFunction('
+  NumericMatrix gram_schmidt_cpp(NumericMatrix X){
+    //first create orthogonal matrix
+    NumericMatrix V(X.nrow(), X.ncol());
+    
+    for(int i = 0; i < X.nrow(); i++) {
+      V(i, 0) = X(i, 0);
+    }
+    
+    for(int j = 1; j < X.ncol(); j++) {
+      for(int i = 0; i < X.nrow(); i++) {
+        V(i, j) = X(i, j);
+      }
+      for(int k = 0; k < j; k++) {
+        // Computer dot product V[, k] * V[,k]
+        double dot_vkvk = 0.0;
+        for (int i = 0; i < X.nrow(); i++) {
+         dot_vkvk +=  V(i, k) * V(i, k);
+        }
+        // Compute dot product V[,k] * X[,j]
+        double dot_vkxj = 0.0;
+        for (int i = 0; i < X.nrow(); i++) {
+          dot_vkxj += V(i, k) * X(i, j);
+        }
+      
+        // Subtract projection
+        for (int i = 0; i < X.nrow(); i++) {
+          V(i, j) -= (dot_vkxj / dot_vkvk) * V(i, k);
+        }
+      }
+    }
+    
+    NumericMatrix Q(X.nrow(), X.ncol());
+    
+    // Normalize columns to get Q
+    for (int j = 0; j < X.ncol(); j++) {
+      double norm = 0.0;
+      for (int i = 0; i < X.nrow(); i++) {
+        norm += V(i, j) * V(i, j);
+      }
+      norm = sqrt(norm);
+      
+      for (int i = 0; i < X.nrow(); i++) {
+        Q(i, j) = V(i, j) / norm;
+      }
+    }
+  
+  return Q;
+  }
+')
 ```
 
 Here is the implementation in R for reference taken from lab 5:
@@ -83,82 +152,264 @@ microbenchmark(
 Create a variable `n` to be 10 and a vaiable `Nvec` to be 100 initially. Create a random vector via `rnorm` `Nvec` times and load it into a `Nvec` x `n` dimensional matrix.
 
 ```{r}
-#TO-DO
+n = 10
+Nvec = 100
+X = matrix(rnorm(Nvec * n), nrow = Nvec, ncol = n)
 ```
 
 Write a function `all_angles` that measures the angle between each of the pairs of vectors. You should measure the vector on a scale of 0 to 180 degrees with negative angles coerced to be positive.
 
 ```{r}
-#TO-DO
+all_angles = function(X) {
+  m = nrow(X) 
+  
+  angles = array(data = NA, dim = choose(m, 2))  # 1D array to store unique pairs
+  
+  idx = 1  # counter for position in angles vector
+  
+  for (i in 1:(m - 1)) {
+    for (j in (i + 1):m) {
+      dot_product = sum(X[i, ] * X[j, ])
+      norm_i = sqrt(sum(X[i, ]^2))
+      norm_j = sqrt(sum(X[j, ]^2))
+      
+      cos_theta = dot_product / (norm_i * norm_j)
+      
+      # Clip cos_theta to [-1, 1] to avoid NaN
+      cos_theta = min(1, max(-1, cos_theta))
+      
+      angle = acos(cos_theta) * (180 / pi)  # Convert radians to degrees
+      angles[idx] = abs(angle)              # Store in 1D vector
+      idx = idx + 1                         # Move to next position
+    }
+  }
+  
+  return(angles)
+}
 ```
 
 Plot the density of these angles.
 
 ```{r}
-#TO-DO
+library(ggplot2)
+
+angles = all_angles(X)
+angle_vec = as.vector(angles)
+angle_vec = angle_vec[!is.na(angle_vec)]
+df = data.frame(angle = angle_vec)
+
+ggplot(df, aes(x = angle)) +
+  geom_density() +
+  labs(title = "Density of All Pairwise Angles",
+       x = "Angle (degrees)",
+       y = "Density") +
+  theme_minimal()
 ```
 
 Write an Rcpp function `all_angles_cpp` that does the same thing. Use an IDE if you want, but write it below in-line.
 
 ```{r}
-#TO-DO
+library(Rcpp)
+
+cppFunction('
+NumericVector all_angles_cpp(NumericMatrix X) {
+  int m = X.nrow();
+  int n = X.ncol();
+  int num_angles = m * (m - 1) / 2;
+  
+  NumericVector angles(num_angles);
+  int idx = 0;
+  
+  for (int i = 0; i < m - 1; ++i) {
+    for (int j = i + 1; j < m; ++j) {
+      double dot_product = 0.0;
+      double norm_i = 0.0;
+      double norm_j = 0.0;
+      
+      for (int k = 0; k < n; ++k) {
+        dot_product += X(i, k) * X(j, k);
+        norm_i += X(i, k) * X(i, k);
+        norm_j += X(j, k) * X(j, k);
+      }
+      
+      double cos_theta = dot_product / (sqrt(norm_i) * sqrt(norm_j));
+      
+      // Clip cos_theta to [-1, 1]
+      cos_theta = std::max(-1.0, std::min(1.0, cos_theta));
+      
+      double angle = std::acos(cos_theta) * (180.0 / M_PI); // Radians to degrees
+      angles[idx] = std::abs(angle);
+      idx++;
+    }
+  }
+  
+  return angles;
+}
+')
 ```
 
 Test the time difference between these functions for `n = 1000` and `Nvec = 100, 500, 1000, 5000` using the package `microbenchmark`.  Store the results in a matrix with rows representing `Nvec` and two columns for base R and Rcpp.
 
 ```{r}
-Nvecs = c(100, 500, 1000, 5000)
 
-results_for_time = data.frame(
-  Nvec = Nvecs,
-  time_for_base_R = numeric(),
-  time_for_cpp = numeric()
-)
-for (i in 1 : length(Nvecs)){
-  X = matrix(rnorm(n * Nvecs[i]), nrow = Nvec)
-  results_for_time$time_for_base_R[i] = all_angles(X)
-  results_for_time$time_for_cpp[i] = all_angles_cpp(X)
+n = 1000
+Nvecs = c(100, 500, 1000,5000)
+
+# Preallocate timing arrays
+all_angles_baseR_times = array(NA, dim = length(Nvecs))
+all_angles_cpp_times = array(NA, dim = length(Nvecs))
+
+# Loop over each Nvec
+for (i in seq_along(Nvecs)) {
+  set.seed(123)  # reproducibility
+  X = matrix(rnorm(Nvecs[i] * n), nrow = Nvecs[i], ncol = n)
+  
+  # Benchmark and take mean time
+  all_angles_baseR_times[i] = mean(microbenchmark(all_angles(X), times = 5)$time)
+  all_angles_cpp_times[i] = mean(microbenchmark(all_angles_cpp(X), times = 5)$time)
 }
 
-ggplot(results_for_time) + 
-  geom_line(aes(x = Nvec, y = time_for_base_R), col = "red") +
-  geom_line(aes(x = Nvec, y = time_for_cpp), col = "blue")
+
+
 ```
+
+
 
 Plot the divergence of performance (in log seconds) over n using a line geometry. Use two different colors for the R and CPP functions. Make sure there's a color legend on your plot. We wil see later how to create "long" matrices that make such plots easier.
 
 ```{r}
-#TO-DO
+
+
+categories = rep(c("Base R", "Rcpp"), each = length(Nvecs))
+times = c(all_angles_baseR_times, all_angles_cpp_times)/ 1e9
+
+angles_df = data.frame(
+  implementation = factor(categories),
+  Nvec = rep(Nvecs, times = 2),
+  times = times
+)
+
+# Now plot
+ggplot(angles_df) +
+  aes(x = Nvec, y = times, col = implementation) +
+  geom_line() +
+  scale_y_continuous(trans = "log10") + 
+  ggtitle("Performance of Angle Calculations Between Vectors", subtitle = "R vs. Rcpp") +
+  labs(x = "Number of Vectors (Nvec)", y = "Time (seconds)") +
+  theme_minimal()
 ```
 
 Let `Nvec = 10000` and vary `n` to be 10, 100, 1000. Plot the density of angles for all three values of `n` on one plot using color to signify `n`. Make sure you have a color legend. This is not easy.
 
 ```{r}
 #TO-DO
+
+# Now for the experiment
+set.seed(123)  # for reproducibility
+Nvec <- 10000
+n_values <- c(10, 100, 1000)
+
+angles_list <- list()
+
+for (n in n_values) {
+  cat("Processing n =", n, "\n")
+  X <- matrix(rnorm(Nvec * n), nrow = Nvec, ncol = n)
+  angles <- all_angles_cpp(X)
+  
+  # Sample a subset because choose(10000,2) is too big (~50 million entries!)
+  angles_sampled <- sample(angles, 100000)  # take 100,000 samples to plot nicely
+  
+  angles_list[[as.character(n)]] <- angles_sampled
+}
+
+# Make a dataframe for ggplot
+df <- do.call(rbind, lapply(names(angles_list), function(n) {
+  data.frame(
+    angle = angles_list[[n]],
+    n = factor(n)
+  )
+}))
+
+# Now plot
+ggplot(df, aes(x = angle, color = n)) +
+  geom_density() +
+  labs(
+    title = "Density of Pairwise Angles for Different n",
+    x = "Angle (degrees)",
+    y = "Density",
+    color = "Dimension (n)"
+  ) +
+  theme_minimal()
 ```
 
 Write an R function `nth_fibonnaci` that finds the nth Fibonnaci number via recursion but allows you to specify the starting number. For instance, if the sequence started at 1, you get the familiar 1, 1, 2, 3, 5, etc. But if it started at 0.01, you would get 0.01, 0.01, 0.02, 0.03, 0.05, etc.
 
 ```{r}
 #TO-DO
+nth_fibonnaci = function (n, start = 1) {
+  if (n == 1 || n == 2) {start}
+  else {
+    nth_fibonnaci(n - 1, start) + nth_fibonnaci(n - 2, start)
+  }
+}
+
+
 ```
 
 Write an Rcpp function `nth_fibonnaci_cpp` that does the same thing. Use an IDE if you want, but write it below in-line.
 
 ```{r}
 #TO-DO
+cppFunction('
+  double nth_fibonnaci_cpp(int n, double start) {
+    if (n == 1 || n == 2) {
+      return start;
+    }
+    
+    return nth_fibonnaci_cpp(n - 1, start) + nth_fibonnaci_cpp(n-2, start);
+  }
+')
 ```
 
-Time the difference in these functions for n = 100, 200, ...., 1500 while starting the sequence at the smallest possible floating point value in R. Store the results in a matrix.
+Time the difference in these functions for n = 1,2, ... 20 while starting the sequence at the smallest possible floating point value in R. 
 
 ```{r}
 #TO-DO
+ns = seq(from = 1, to = 20, by = 1)
+res = list()
+for (n in ns) {
+  res[[as.character(n)]] =  microbenchmark(
+    nth_fibonnaci(n, .Machine$double.eps),
+    nth_fibonnaci_cpp(n, .Machine$double.eps),
+    times = 1
+    )
+}
+res
 ```
 
 Plot the divergence of performance (in log seconds) over n using a line geometry. Use two different colors for the R and CPP functions. Make sure there's a color legend on your plot.
 
 ```{r}
-#TO-DO
+ns = seq(from = 1, to = 20, by = 1)
+fib_baseR_times = array(data = NA, dim = length(ns))
+fib_cpp_times = array(data = NA, dim = length(ns))
+for (n in ns) {
+  fib_baseR_times[n] = mean(microbenchmark(nth_fibonnaci(n, .Machine$double.eps), times = 10)$time)
+  fib_cpp_times[n] = mean(microbenchmark(nth_fibonnaci_cpp(n, .Machine$double.eps), times = 10)$time)
+}
+
+categories = rep(c("baseR", "cpp"), each = length(ns))
+fib_df = data.frame(
+  implementation = factor(categories),
+  n = rep(ns, times = 2),
+  times = c(fib_baseR_times, fib_cpp_times)
+)
+ggplot(fib_df) +
+  aes(x = n, y = times, col = implementation) +
+  geom_line() +
+  scale_y_continuous(trans = "log10") + 
+  ggtitle("Performance of Naive Recursive Fibonacci Implementation", subtitle = "R vs. Rcpp") +
+  labs(x = "n", y = "Time (nanoseconds)")
 ```
 
 
@@ -216,99 +467,123 @@ Plot an example dataset of size 500:
 ```{r}
 n_test = 500
 #TO-DO
+
+train_df = data.frame(x = x_train, y = y_train)
+
+ggplot(train_df, aes(x = x, y = y)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  stat_function(fun = sin, color = "red", size = 1.2) +
+  labs(title = "Simulated Sine Dataset (n = 500)",
+       x = "x",
+       y = "y") +
+  theme_minimal()
+
+
 ```
+
+```{r}
+ls("package:YARF")
+```
+
 
 Create a test set of size 500 from this data generating process:
 
 ```{r}
 #TO-DO
+x_test = runif(n_test, x_min, x_max)
+y_test = f_x(x_test) + rnorm(n_test, 0, sigma)
+
+test_df = data.frame(x = x_test, y = y_test)
 ```
 
 Locate the optimal node size hyperparameter for the regression tree model. I believe you can use `randomForest` here by setting `ntree = 1`, `replace = FALSE`, `sampsize = n` (`mtry` is already set to be 1 because there is only one feature) and then you can set `nodesize`. Plot nodesize by out of sample s_e. Plot.
 
 ```{r}
 #TO-DO
+pacman::p_load(randomForest)
+library(randomForest)
+
+max_nodesize_to_try = 70
+in_sample_errors = numeric(max_nodesize_to_try)
+oos_errors = numeric(max_nodesize_to_try)
+set.seed(1984)
+
+for (nodesize_val in 1:max_nodesize_to_try) {
+  
+  model = randomForest(
+    x = data.frame(x = x_train),
+    y = y_train,
+    ntree = 1,
+    replace = FALSE,
+    sampsize = n_train,
+    mtry = 1,
+    nodesize = nodesize_val
+  )
+  
+  # Predictions on training set
+  yhat_train = predict(model, data.frame(x = x_train))
+  in_sample_errors[nodesize_val] = sd(y_train - yhat_train)
+  
+  # Predictions on test set
+  yhat_test = predict(model, data.frame(x = x_test))
+  oos_errors[nodesize_val] = sd(y_test - yhat_test)
+}
+
+df_errors = data.frame(
+  nodesize = 1:max_nodesize_to_try,
+  in_sample_errors = in_sample_errors,
+  oos_errors = oos_errors
+)
+
+ggplot(df_errors) +
+  geom_line(aes(x = nodesize, y = in_sample_errors), color = "red") +
+  geom_line(aes(x = nodesize, y = oos_errors), color = "blue") +
+  labs(title = "Nodesize vs In-sample and Out-of-sample Standard Error",
+       x = "Nodesize",
+       y = "Standard Error (s_e)") +
+  theme_minimal()
+
 ```
 
 Plot the regression tree model g(x) with the optimal node size.
 
 ```{r}
 #TO-DO
+optimal_nodesize = which.min(oos_errors)
+
+optimal_tree_model = randomForest(
+  x = data.frame(x = x_train),
+  y = y_train,
+  ntree = 1,
+  replace = FALSE,
+  sampsize = n_train,
+  mtry = 1,
+  nodesize = optimal_nodesize
+)
+
+x_grid = seq(x_min, x_max, length.out = 1000)
+g_x = predict(optimal_tree_model, data.frame(x = x_grid))
+
+train_df = data.frame(x = x_train, y = y_train)
+
+ggplot() +
+  geom_point(data = train_df, aes(x = x, y = y), color = "blue", alpha = 0.6) +
+  geom_line(aes(x = x_grid, y = g_x), color = "red", size = 1.2) +
+  labs(title = paste0("Fitted Regression Tree g(x) with Optimal Nodesize = ", optimal_nodesize),
+       x = "x",
+       y = "y") +
+  theme_minimal()
+
 ```
 
 Find the oosRMSE of this optimal-node-size model.
 
 ```{r}
 #TO-DO
+yhat_test = predict(optimal_tree_model, data.frame(x = x_test))
+oos_RMSE = sqrt(mean((y_test - yhat_test)^2))
+oos_RMSE
 ```
-
-Provide the bias-variance decomposition of this DGP fit with this model. It is a lot of code, but it is in the practice lectures. If your three numbers don't add up within two significant digits, increase your resolution.
-
-```{r}
-#TO-DO
-```
-
-# Classification Trees
-
-Let's get the letter recognition data from the `mlbench` package.
-
-```{r}
-rm(list = ls())
-pacman::p_load(mlbench)
-data(LetterRecognition, package = "mlbench")
-n = nrow(LetterRecognition)
-skimr::skim(LetterRecognition)
-```
-
-This dataset has 20,000 examples. Create a training-select-test split so that they each have 1,000 observations.
-
-```{r}
-train_idx = sample(1 : n, 1000)
-select_idx = sample(setdiff(1 : n, train_idx), 1000)
-test_idx = sample(setdiff(1 : n, c(train_idx, select_idx)), 1000)
-letters_train = LetterRecognition[train_idx, ]
-letters_select = LetterRecognition[select_idx, ]
-letters_test = LetterRecognition[test_idx, ]
-```
-
-Find the optimal classification tree by using the model selection algorithm to optimize the nodesize hyperparameter. Use misclassification error as the performance metric.
-
-```{r}
-nodesizes = seq(1, 200, by = 10)
-misclassification_errs = array(NA, length(nodesizes))
-#TO-DO
-```
-
-Plot the oos misclassification error by nodesize.
-
-```{r}
-ggplot(data.frame(nodesize = nodesizes, misclassification_error = misclassification_errs)) + 
-  aes(x = nodesize, misclassification_error = misclassification_error) +
-  geom_point() + 
-  geom_line()
-```
-
-Construct the optimal classification tree on train and select sets. Then estimate generalization error. Save `y_hat_test` as we'll need it later.
-
-```{r}
-tree_mod_opt = #TO-DO
-```
-
-Print out the top of the tree so we can have some level of interpretation to how the model g is predicting.
-
-```{r}
-illustrate_trees(tree_mod_opt, max_depth = 5, length_in_px_per_half_split = 30, open_file = TRUE)
-```
-
-Create a "confusion matrix". This means it shows every predicted level (which is a letter in our case) and every actual level. Here you'll see every type of error e.g. "P was predicted but the real letter is H", "M was predicted but the real letter is N" etc. This is really easy: one call to the `table` function is all you need.
-
-```{r}
-#TO-DO
-```
-
-Which errors are most prominent in this model?
-
-#TO-DO
 
 
 
