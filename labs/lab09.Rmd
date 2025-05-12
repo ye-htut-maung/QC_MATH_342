@@ -468,7 +468,7 @@ Plot an example dataset of size 500:
 n_test = 500
 #TO-DO
 
-train_df = data.frame(x = x_train, y = y_train)
+train_df = data.frame(x = x, y = y_train)
 
 ggplot(train_df, aes(x = x, y = y)) +
   geom_point(color = "blue", alpha = 0.6) +
@@ -552,7 +552,7 @@ Plot the regression tree model g(x) with the optimal node size.
 optimal_nodesize = which.min(oos_errors)
 
 optimal_tree_model = randomForest(
-  x = data.frame(x = x_train),
+  x = data.frame(x = x),
   y = y_train,
   ntree = 1,
   replace = FALSE,
@@ -564,7 +564,7 @@ optimal_tree_model = randomForest(
 x_grid = seq(x_min, x_max, length.out = 1000)
 g_x = predict(optimal_tree_model, data.frame(x = x_grid))
 
-train_df = data.frame(x = x_train, y = y_train)
+train_df = data.frame(x = x, y = y_train)
 
 ggplot() +
   geom_point(data = train_df, aes(x = x, y = y), color = "blue", alpha = 0.6) +
