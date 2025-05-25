@@ -1,0 +1,680 @@
+---
+title: "Final_Project"
+Name: Ye Htut Maung
+date: "2025-05-25"
+---
+
+# Packages/Libraries Setup
+
+```{r}
+pacman::p_load(rJava, readr, stringr, pander, checkmate, ggplot2, gridExtra, R6, Bolstad2)
+if (!pacman::p_isinstalled(YARF)){
+  pacman::p_install_gh("kapelner/YARF/YARFJARs", ref = "dev")
+  pacman::p_install_gh("kapelner/YARF/YARF", ref = "dev", force = TRUE)
+}
+pacman::p_load(YARF)
+options(java.parameters = "-Xmx8000m")
+pacman::p_load(data.table, tidyverse, magrittr, ggplot2, skimr, lubridate, missForest, YARF, rJava)
+pacman::p_load(mlr3, mlr3learners, mlr3tuning, mlr3verse, paradox)
+```
+
+
+
+# Data Import and skimming data
+
+```{r}
+Xy = fread("housing_data_2016_2017.csv")
+skim(Xy)
+head(Xy, 5)
+nrow(Xy)
+ncol(Xy)
+```
+
+
+
+
+# Data Preparation
+# dropping irrelevent features
+```{r}
+# List of columns to drop
+cols_to_drop = c(
+  "HITId", "HITTypeId", "Title", "Description", "Reward", "CreationTime",
+  "RequesterAnnotation", "Expiration", "AssignmentId", "WorkerId",
+  "AssignmentStatus", "AcceptTime", "SubmitTime", "AutoApprovalTime",
+  "ApprovalTime", "LifetimeApprovalRate", "Last30DaysApprovalRate", "Last7DaysApprovalRate",
+  "Keywords", "NumberOfSimilarHITs", "LifetimeInSeconds", "RejectionTime", "RequesterFeedback",
+  "MaxAssignments", "AssignmentDurationInSeconds", "AutoApprovalDelayInSeconds", "WorkTimeInSeconds",
+  "model_type", "date_of_sale"
+) # I drop URL as I can get zipcode from full_address_or_zip_code
+
+# Drop the columns
+Xy_new =  Xy[, !names(Xy) %in% cols_to_drop, with = FALSE]
+skim(Xy_new)
+head(Xy_new, 5)
+ncol(Xy_new)
+```
+
+We left with 27 featuers.
+
+
+# cat allowed
+``` {r}
+# cats_allowed (yes, no) 
+Xy_new[["cats_allowed"]]
+sum(is.na(Xy_new$cats_allowed)) # no missing
+Xy_new[cats_allowed == "y", cats_allowed := "yes"]
+Xy_new[, cats_allowed := as.factor(cats_allowed)]
+
+Xy_new[["cats_allowed"]]
+summary(Xy_new$cats_allowed)
+```
+
+
+# common_charges and maintenance_cost
+``` {r}
+# common_charges is for condo
+Xy_new[["common_charges"]]
+# maintenance_cost is for co op
+Xy_new[["maintenance_cost"]]
+# combine common_charges and maintenance_cost into one column and called it general_cost
+Xy_new[, general_cost := fifelse(!is.na(common_charges), common_charges, maintenance_cost)]
+table(Xy_new$general_cost)
+#checking
+Xy_new[, .(common_charges, maintenance_cost, general_cost)]
+# drop the common_charges and maintenance_cost
+Xy_new[, c("common_charges", "maintenance_cost") := NULL]
+sum(is.na(Xy_new$general_cost)) # 100 missing
+# remove $ and , and conver to numeric
+Xy_new[, general_cost := as.numeric(gsub("[\\$,]", "", general_cost))]
+summary(Xy_new$general_cost)
+sd(Xy_new$general_cost, na.rm = TRUE)
+```
+
+
+
+# coop_condo 
+``` {r}
+
+Xy_new[["coop_condo"]]
+unique(Xy_new$coop_condo)
+sum(is.na(Xy_new$coop_condo)) # no missing
+
+Xy_new[, coop_condo := as.factor(coop_condo)]
+table(Xy_new$coop_condo)
+```
+
+# dining_room_type (make it factor)
+```{r}
+table(Xy_new$dining_room_type)
+Xy_new[dining_room_type %in% c("dining area", "none"), dining_room_type := "other"]
+table(Xy_new$dining_room_type)
+Xy_new[["dining_room_type"]]
+Xy_new[, dining_room_type := as.factor(dining_room_type)]
+levels(Xy_new$dining_room_type)
+sum(is.na(Xy_new$dining_room_type))
+```
+
+# dogs_allowed
+```{r}
+table(Xy_new$dogs_allowed)
+Xy_new[dogs_allowed == "yes89", dogs_allowed := "yes"]
+Xy_new[, dogs_allowed := as.factor(dogs_allowed)]
+table(Xy_new$dogs_allowed)
+sum(is.na(Xy_new$dogs_allowed))
+```
+
+# fuel_type
+```{r}
+# fuel_type
+table(Xy_new$fuel_type)
+# Combine "Other" into "other"
+Xy_new[fuel_type %in% c("Other"), fuel_type := "other"]
+# Convert to factor
+Xy_new[, fuel_type := as.factor(fuel_type)]
+table(Xy_new$fuel_type)
+levels(Xy_new$fuel_type)
+sum(is.na(Xy_new$fuel_type))
+```
+
+# garage_exists
+```{r}
+
+table(Xy_new$garage_exists)
+Xy_new[["garage_exists"]]
+# Normalize values to lowercase
+Xy_new[, garage_exists := tolower(garage_exists)]
+# Set valid yes values
+Xy_new[garage_exists %in% c("1", "eys", "ug", "underground"), garage_exists := "yes"]
+# Create binary indicator: 1 if garage exists, 0 otherwise
+Xy_new[is.na(garage_exists), garage_exists := "no"]
+Xy_new[, garage_exists := as.factor(garage_exists)]
+sum(is.na(Xy_new$garage_exist))
+table(Xy_new$garage_exists)
+```
+
+# kitchen_type
+```{r}
+table(Xy_new$kitchen_type)
+# Make everything lowercase
+Xy_new[, kitchen_type := tolower(kitchen_type)]
+# Collapse "eat in" variations into "eat_in"
+Xy_new[kitchen_type %in% c("eat in", "eatin"), kitchen_type := "eat_in"]
+# Collapse "efficiency" variations into "efficiency"
+Xy_new[kitchen_type %in% c("efficiemcy", "efficiency kitchen", "efficiency kitchene", 
+                           "efficiency ktchen", "efficiency kitchene"), 
+        kitchen_type := "efficiency"]
+Xy_new[kitchen_type %in% "1955", kitchen_type := "none"]
+# Convert to factor
+Xy_new[, kitchen_type := as.factor(kitchen_type)]
+# View cleaned result
+table(Xy_new$kitchen_type)
+sum(is.na(Xy_new$kitchen_type))
+```
+
+# parking_charges
+
+```{r}
+table(Xy_new$parking_charges)
+# Remove $ and convert to numeric
+Xy_new[, parking_charges := as.numeric(gsub("\\$", "", parking_charges))]
+summary(Xy_new$parking_charges)
+sum(is.na(Xy_new$parking_charges))
+sd(Xy_new$parking_charges, na.rm=TRUE)
+```
+
+
+# sale_price
+```{r}
+table(Xy_new$sale_price)
+Xy_new[["sale_price"]]
+# Remove dollar sign and convert to numeric
+Xy_new[, sale_price := as.numeric(gsub("[\\$,]", "", sale_price))]
+summary(Xy_new$sale_price)
+```
+
+# total_taxes
+``` {r}
+table(Xy_new$total_taxes)
+Xy_new[, total_taxes := as.numeric(gsub("[\\$,]", "", total_taxes))]
+summary(Xy_new$total_taxes)
+sd(Xy_new$total_taxes, na.rm=TRUE)
+```
+
+# listing_price_to_nearest_1000 
+```{r}
+table(Xy_new$listing_price_to_nearest_1000 )
+Xy_new[["listing_price_to_nearest_1000"]]
+Xy_new[, listing_price_to_nearest_1000 := as.numeric(gsub("[\\$,]", "", listing_price_to_nearest_1000))]
+summary(Xy_new$listing_price_to_nearest_1000)
+sd(Xy_new$listing_price_to_nearest_1000, na.rm=TRUE)
+```
+
+
+``` {r}
+# approx_year_built
+Xy_new[["approx_year_built"]] 
+summary(Xy_new$approx_year_built)
+sd(Xy_new$approx_year_built, na.rm=TRUE)
+```
+
+# community_district_num
+```{r}
+Xy_new[["community_district_num"]]
+table(Xy_new$community_district_num)
+Xy_new[, community_district_num := as.character(community_district_num)]
+# Define the values to collapse into "other"
+rare_districts = c(3, 4, 6, 8, 11, 12, 13, 14, 15, 16, 18, 19, 20, 22, 23, 31, 32)
+
+# Convert those values to "other"
+Xy_new[community_district_num %in% rare_districts, community_district_num := "other"]
+
+# Finally, convert to factor
+Xy_new[, community_district_num := as.factor(community_district_num)]
+
+table(Xy_new$community_district_num)
+summary(Xy_new$community_district_num)
+sum(is.na(Xy_new$community_district_num))
+```
+
+
+
+# num_bedrooms
+```{r}
+Xy_new[["num_bedrooms"]]
+summary(Xy_new$num_bedrooms)
+sd(Xy_new$num_bedrooms, na.rm=TRUE)
+```
+
+
+# num_floors_in_building
+```{r}
+Xy_new[["num_floors_in_building"]]
+table(Xy_new$num_floors_in_building)
+summary(Xy_new$num_floors_in_building)
+sd(Xy_new$num_floors_in_building, na.rm=TRUE)
+```
+
+# num_full_bathrooms
+``` {r}
+Xy_new[["num_full_bathrooms"]]
+table(Xy_new$num_full_bathrooms)
+summary(Xy_new$num_full_bathrooms)
+sd(Xy_new$num_full_bathrooms, na.rm=TRUE)
+sum(is.na(Xy_new$num_full_bathrooms))
+```
+
+
+# num_half_bathrooms
+```{r}
+Xy_new[["num_half_bathrooms"]]
+table(Xy_new$num_half_bathrooms)
+summary(Xy_new$num_half_bathrooms)
+sd(Xy_new$num_half_bathrooms, na.rm=TRUE)
+sum(is.na(Xy_new$num_half_bathrooms))
+```
+
+# num_total_rooms  
+```{r}
+Xy_new[["num_total_rooms"]]
+table(Xy_new$num_total_rooms)
+summary(Xy_new$num_total_rooms)
+sd(Xy_new$num_total_rooms, na.rm=TRUE)
+```
+
+
+# pct_tax_deductibl
+```{r}
+Xy_new[["pct_tax_deductibl"]]
+table(Xy_new$pct_tax_deductibl)
+summary(Xy_new$pct_tax_deductibl)
+sd(Xy_new$pct_tax_deductibl, na.rm=TRUE)
+```
+
+# sq_footage 
+```{r}
+Xy_new[["sq_footage"]]
+table(Xy_new$sq_footage)
+summary(Xy_new$sq_footage)
+sd(Xy_new$sq_footage, na.rm=TRUE)
+```
+
+
+# walk_score
+```{r}
+Xy_new[["walk_score"]]
+table(Xy_new$walk_score)
+summary(Xy_new$walk_score)
+sd(Xy_new$walk_score, na.rm=TRUE)
+```
+
+
+# full_address_or_zip_code and URL
+```{r}
+
+Xy_new[, zip_code := stringr::str_extract(full_address_or_zip_code, "\\d{5}$")]
+Xy_new[, "full_address_or_zip_code" := NULL]
+# Xy_new[, zip_code := as.factor(zip_code)]
+
+
+# Create a new column 'final_url' taking non-missing values from URL or url
+Xy_new[, final_url := fifelse(!is.na(URL), URL, url)]
+Xy_new[, c("URL", "url") := NULL]
+head(Xy_new$final_url, 5)
+Xy_new[, zip_from_url := stringr::str_extract(final_url, "(?<=-)[0-9]{5}(?=-[0-9]+$)")]
+
+# Xy_new[, zip_from_url := as.factor(zip_from_url)]
+# Fill missing zip_code using zip_from_url
+Xy_new[is.na(zip_code), zip_code := zip_from_url]
+# Drop the temporary zip_from_url column and final_url
+Xy_new[,c("final_url", "zip_from_url") := NULL]
+table(Xy_new$zip_code)
+sum(is.na(Xy_new$zip_code))
+# making other for the zip code that is less than 3
+# Count frequency of each zip code
+zip_counts = table(Xy_new$zip_code)
+zip_counts
+# Identify zip codes with < 3 instances
+rare_zips = names(zip_counts[zip_counts < 3])
+rare_zips
+# Collapse rare zip codes into "other"
+Xy_new[zip_code %in% rare_zips, zip_code := "other"]
+
+# Convert to factor
+Xy_new[, zip_code := as.factor(zip_code)]
+
+table(Xy_new$zip_code)
+summary(Xy_new$zip_code)
+#sd(Xy_new$zip_code, na.rm=TRUE)
+```
+
+```{r}
+ncol(Xy_new)
+```
+
+
+
+# Data Cleaning I (Errors, Duplicates, Outliers Handling)
+
+# Data Manipulation (Featurization, Imputation)
+```{r}
+head(Xy_new, 900)
+# ensures non-missing come first (FALSE < TRUE)
+Xy_new = Xy_new[order(is.na(sale_price))]
+sum(is.na(Xy_new$sale_price))
+which(!is.na(Xy_new$sale_price))
+last_non_missing_y_index = max(range(which(!is.na(Xy_new$sale_price))))
+last_non_missing_y_index
+```
+
+# Imputation
+
+```{r}
+# Ensure it's a data.frame
+is.data.frame(Xy_new)
+
+# Define total number of non-missing y rows
+total_non_missing = last_non_missing_y_index
+
+# Set sizes explicitly
+select_size = 100
+test_size = 100
+
+# Get index ranges
+select_indices = 1:select_size
+test_indices = (select_size + 1):(select_size + test_size)
+train_indices = (select_size + test_size + 1):total_non_missing
+
+# Subset the data
+D_select = Xy_new[select_indices]
+D_test = Xy_new[test_indices]
+D_train = Xy_new[train_indices]
+
+# Extract y values
+y_select = D_select$sale_price
+y_test = D_test$sale_price
+```
+
+# Pre-imputation Locking out the y_test
+```{r}
+# Start from a copy of Xy_new (already sorted so rows 1:528 have non-missing y)
+Xy_pre_impute = copy(Xy_new)
+
+# Combine indices for test and select sets
+holdout_indices = c(test_indices, select_indices)
+
+# Mask sale_price values in both sets
+Xy_pre_impute[holdout_indices, sale_price := NA]
+```
+
+# imputation time
+
+```{r}
+# Apply missForest
+Xy_imputed = missForest(Xy_pre_impute)$ximp
+Xy_imputed
+```
+# Cleaning after imputation (round numbers that can't have decimals)
+```{r}
+cols_to_round = c(
+  "num_bedrooms", 
+  "num_floors_in_building", 
+  "num_half_bathrooms", 
+  "num_total_rooms", 
+  "approx_year_built"
+)
+
+# Round and convert to integer
+Xy_imputed[, (cols_to_round) := lapply(.SD, function(x) as.integer(round(x))), .SDcols = cols_to_round]
+Xy_imputed
+```
+
+
+# spliting into X_train, X_test, y_train, y_test
+
+```{r}
+# Training set
+X_train = Xy_imputed[train_indices, !"sale_price", with = FALSE]
+y_train = Xy_imputed[train_indices, sale_price]
+
+# Test set
+X_test = Xy_imputed[test_indices, !"sale_price", with = FALSE]
+# y_test was saved before imputation and should not be overwritten
+
+# Select (validation) set
+X_select = Xy_imputed[select_indices, !"sale_price", with = FALSE]
+# y_select was also saved before imputation and should remain untouched
+```
+
+
+
+# Regression Tree Modeling
+Finding the best nodesize 
+```{r}
+
+# Set max nodesize to test
+max_nodesize_to_try = 70
+
+# Initialize vectors to store errors
+in_sample_errors = numeric(max_nodesize_to_try)
+oos_errors = numeric(max_nodesize_to_try)
+
+# Loop through possible nodesize values
+for (i in 1:max_nodesize_to_try) {
+  tree_mod = YARFCART(data.frame(X_train), y_train, nodesize = i, calculate_oob_error = FALSE)
+  
+  # In-sample prediction
+  yhat_train = predict(tree_mod, data.frame(X_train))
+  in_sample_errors[i] = sd(y_train - yhat_train)
+  
+  # Out-of-sample (validation) prediction
+  yhat_select = predict(tree_mod, data.frame(X_select))
+  oos_errors[i] = sd(y_select - yhat_select)
+}
+
+
+ggplot(data.frame(
+  nodesize = 1:max_nodesize_to_try,
+  in_sample_errors = in_sample_errors,
+  oos_errors = oos_errors
+)) + 
+  geom_point(aes(x = nodesize, y = in_sample_errors), col = "red") +
+  geom_line(aes(x = nodesize, y = in_sample_errors), col = "red") +
+  geom_point(aes(x = nodesize, y = oos_errors), col = "blue") +
+  geom_line(aes(x = nodesize, y = oos_errors), col = "blue") +
+  labs(
+    title = "In-Sample and OOS Error vs Nodesize",
+    x = "nodesize",
+    y = "Standard Deviation Error"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+best_nodesize = which.min(oos_errors)
+cat("Best nodesize based on validation set:", best_nodesize, "\n")
+```
+
+
+
+
+
+```{r}
+
+X_train_select = rbind(X_train, X_select)
+y_train_select = c(y_train, y_select)
+tree_mod = YARFCART(X_train_select,y_train_select, nodesize = best_nodesize, calculate_oob_error = FALSE)
+```
+# illustrate the tree
+```{r}
+get_tree_num_nodes_leaves_max_depths(tree_mod)
+illustrate_trees(tree_mod, max_depth = 6, open_file = TRUE)
+
+```
+
+# prediction on Regression tree 
+# in-sample
+```{r}
+
+y_hat_train_select = predict(tree_mod, X_train_select)
+rmse_train_select = sqrt(mean((y_train_select - y_hat_train_select)^2))
+ss_res_train_select = sum((y_train_select - y_hat_train_select)^2)
+ss_tot_train_select = sum((y_train_select - mean(y_train_select))^2)
+r2_train_select = 1 - ss_res_train_select / ss_tot_train_select
+rmse_train_select
+r2_train_select
+```
+
+
+
+# out-of-sample
+```{r}
+y_hat_test = predict(tree_mod, X_test)
+oos_rmse_tree = sqrt(mean((y_test - y_hat_test)^2))
+ss_res = sum((y_test - y_hat_test)^2)
+ss_tot = sum((y_test - mean(y_test))^2)
+oos_r2_tree = 1 - ss_res / ss_tot
+oos_rmse_tree
+oos_r2_tree
+```
+
+
+
+# Linear Modeling
+
+```{r}
+lm_model = lm(y_train_select ~ ., data = data.frame(X_train_select, y_train_select))
+round(coef(lm_model), 3)
+
+```
+
+# in sample residual
+```{r}
+y_hat_lm_train_select = predict(lm_model,X_train_select)
+rmse_lm_train_select = sqrt(mean((y_train_select - y_hat_lm_train_select)^2))
+rmse_lm_train_select
+
+ss_res = sum((y_train_select - y_hat_lm_train_select)^2)
+ss_tot = sum((y_train_select - mean(y_train_select))^2)
+
+r2_lm_train_select = 1 - ss_res / ss_tot
+r2_lm_train_select
+```
+
+# oos
+```{r}
+oos_y_hat_lm_test = predict(lm_model, X_test)
+oos_rmse_lm_test = sqrt(mean((y_test - oos_y_hat_lm_test)^2))
+oos_rmse_lm_test
+ss_res = sum((y_test - oos_y_hat_lm_test)^2)
+ss_tot = sum((y_test - mean(y_test))^2)
+
+r2_lm_test = 1 - ss_res / ss_tot
+r2_lm_test
+```
+
+
+
+
+# Random Forest Modeling
+
+```{r}
+library(randomForest)
+# Combine X_train and y_train into a single data frame
+df_train = data.frame(X_train)
+df_train$sale_price = y_train
+
+df_select = data.frame(X_select)
+df_select$sale_price = y_select
+
+p = ncol(X_train)  # number of predictors
+num_trees = 1200
+oos_se_by_mtry = numeric(p)
+
+# Loop over mtry from 1 to p
+for (m in 1:p) {
+  rf_model = randomForest(sale_price ~ ., data = df_train, ntree = num_trees, mtry = m)
+  y_hat_select = predict(rf_model, newdata = df_select)
+  oos_se_by_mtry[m] = sqrt(mean((df_select$sale_price - y_hat_select)^2))  # RMSE
+}
+
+# Create data frame for plotting
+df_mtry = data.frame(
+  mtry = 1:p,
+  oos_rmse = oos_se_by_mtry
+)
+
+# Plot OOS RMSE vs mtry
+library(ggplot2)
+ggplot(df_mtry, aes(x = mtry, y = oos_rmse)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "OOS RMSE vs mtry (500 Trees)",
+    x = "mtry (Number of Features Tried at Each Split)",
+    y = "Out-of-Sample RMSE on Select Set"
+  ) +
+  theme_minimal()
+
+# Find best mtry and fit final model
+best_mtry = which.min(oos_se_by_mtry)
+cat("Best mtry based on OOS RMSE:", best_mtry, "\n")
+
+```
+
+
+```{r}
+seed = 42
+num_trees = 1000
+mod_rf = YARF(X_train_select, y_train_select, num_trees = num_trees, seed = seed, mtry = best_mtry, nodesize = 1,    calculate_oob_error = FALSE, verbose = FALSE)
+mod_rf
+```
+# in-sample
+```{r}
+
+y_hat_rf_train_select = predict(mod_rf, X_train_select)
+
+rmse_rf_train_select = sqrt(mean((y_train_select - y_hat_rf_train_select)^2))
+
+ss_res_train_select = sum((y_train_select - y_hat_rf_train_select)^2)
+ss_tot_train_select = sum((y_train_select - mean(y_train_select))^2)
+r2_rf_train_select = 1 - ss_res_train_select / ss_tot_train_select
+
+cat("In-sample RMSE:", rmse_rf_train_select, "\n")
+cat("In-sample R²:", r2_rf_train_select, "\n")
+```
+
+
+# out-of-sample 
+```{r}
+
+y_hat_rf_test = predict(mod_rf, X_test)
+rmse_rf_test = sqrt(mean((y_test - y_hat_rf_test)^2))
+ss_res_test = sum((y_test - y_hat_rf_test)^2)
+ss_tot_test = sum((y_test - mean(y_test))^2)
+r2_rf_test = 1 - ss_res_test / ss_tot_test
+cat("Out-of-sample RMSE:", rmse_rf_test, "\n")
+cat("Out-of-sample R²:", r2_rf_test, "\n")
+```
+
+
+# Shipping Final Model Trained On All Data
+```{r}
+# Combine X and y from train, select, and test
+X_final = rbind(X_train, X_select, X_test)
+y_final = c(y_train, y_select, y_test)
+
+# Fit final YARF model
+mod_rf_final = YARF(X_final, y_final, 
+                    num_trees = num_trees, 
+                    seed = seed, 
+                    mtry = best_mtry,
+                    nodesize = 1,   calculate_oob_error = FALSE, verbose = FALSE)
+mod_rf_final
+```
+
+
+```{r}
+
+```
+
+

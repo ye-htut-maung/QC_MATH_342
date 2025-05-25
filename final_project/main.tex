@@ -1,0 +1,608 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{array}
+\usepackage{minted}
+\usepackage[margin=1in]{geometry}
+\usepackage{float}
+\title{Model Prediction to Housing Sale Price in Queens, NY}
+\author{Ye Htut Maung}
+\date{May 2025}
+% Set double spacing
+\usepackage{setspace}  % For double spacing
+%\doublespacing
+
+\begin{document}
+
+
+\maketitle
+\begin{center}
+    \footnotesize Final project for Math 342W Data Science at Queens College\\
+\end{center}
+
+
+
+\begin{flushright}
+By [Ye Htut Maung]\\
+In collaboration with:\\
+~[Sergio E. Garcia Tapia]~\\
+~[Brian Rojas Hernandez]~\\
+
+\end{flushright}
+
+
+\subsection*{Abstract}
+
+In this project, we developed and compared multiple predictive models to estimate apartment sale prices in Queens using a cleaned dataset from 2016–2017. We explored linear regression, regression trees, and random forests, with a focus on data preprocessing, imputation using missForest, and honest model evaluation via a 3-way data split. Our findings show that the linear model outperformed tree-based models in out-of-sample performance, likely due to the underlying linear structure in the data and limited training size. While the model is not yet production-ready, it offers insights into how data handling and modeling choices impact predictive performance.
+
+\line(1,0){180} ~~~pagebreak~~~ \line(1,0){180}
+
+\section{Introduction}
+
+In this project, we are going to develop a predictive model to estimate the sale price of apartments in Queens, New York. A predictive model means that we are going to provide some features that is related or contribute to the response value. Then, the model will predict the sale price based on the provided features. We are going to use real estate data collected between February, 2016 and February, 2017. The dataset was harvested with Amazon's MTurk and it is the raw data representation found at MLSI. It includes housing units that are either condominiums or cooperative apartments, with sale prices capped at \$1 million. Our goal of this project is to produce a reliable model that can predict sale prices for new apartment listings based on features provided in the dataset. 
+
+The unit of observation is an individual apartment listing in Queens. The response variable is sale\_price, which is the final selling price of the apartment. The dataset includes various features from the number of rooms, type of apartment, pet policy to community district and listing price.
+
+To build a predictive model, we implemented three different approaches: a regression tree model, a linear regression model, and a random forest model. Each model was trained on a subset of the data with imputed missing values. After building models, we validate with out-of-sample metrics to access our predictive performance. Throughout the process, we explored feature transformations, data cleaning and reports of performance metrics. 
+
+
+\section {The Data}
+
+The dataset used in this project comes from the "housing\_data\_2016\_2017.csv" file provided in the Math 342W GitHub. It was originally obtained via Amazon Mechanical Turk from the Multiple Listing Service (MLSI). The original dataset contains 2,230 rows and 55 columns. In the following steps, we will perform featurization and handle errors and missingness. The population of interest is the set of apartments sold in mainland Queens under \$1 million during the specified time period. There are some columns that are not related to housing price, and we will drop those. We also identified some outliers, including in the zip\_code column. For example, some zip codes appear only once or twice in the dataset. If these appear only in the test set and not in the training set, the model cannot make valid predictions for them. This would lead to errors or extrapolation, which falls outside the range of the training data. We will discuss each feature in more detail in the following subsection.
+
+\subsection{Featurization}
+
+The original dataset includes 55 columns, but not all of them are relevant to predicting sale price. Therefore, we dropped the following columns: "HITId", "HITTypeId", "Title", "Description", "Reward", "CreationTime", "RequesterAnnotation", "Expiration", "AssignmentId", "WorkerId", "AssignmentStatus", "AcceptTime", "SubmitTime", "AutoApprovalTime", "ApprovalTime", "LifetimeApprovalRate", "Last30DaysApprovalRate", "Last7DaysApprovalRate", "Keywords", "NumberOfSimilarHITs", "LifetimeInSeconds", "RejectionTime", "RequesterFeedback", "MaxAssignments", "AssignmentDurationInSeconds", "AutoApprovalDelayInSeconds", "WorkTimeInSeconds", "model\_type", "date\_of\_sale". Most of these are technical metadata fields collected from Amazon Mechanical Turk and are unrelated to housing price prediction.
+
+The reason for dropping "model\_type" is that it contains a large number of unique values, many of which appear to be typos or inconsistently formatted entries. While it is possible to manually clean and combine these values into fewer, more meaningful categories (likely fewer than 20), doing so would introduce subjective bias. Because the data in this column lacks consistency and is difficult to interpret reliably, we concluded that it would not meaningfully contribute to modeling the sale price and thus chose to exclude it. "date\_of\_sale" is also dropped as there are a lot of missiningness in this feature and so, the date of the sale cannot be imputed.
+
+After cleaning and dropping irrelevant columns, we retained 23 features. These include both raw measurements and features that we created to better represent the observations. For some features, we cobmine and make a new column to represent more clear. We will look into each feature separately. Let's take a look of categorical features.
+
+
+
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{3.5cm}|p{5.5cm}|p{2cm}|p{4cm}|}
+        \hline
+        Feature Name & Description & Number of Missingness & Summary \\
+        \hline
+        cat\_allowed & To identify whether cat is allowed in the  apartment & 0 & yes: 37.13\% 
+        
+        no: 62.87\% 
+        
+        \\
+        \hline
+        coop\_condo & Either coop or condo type & 0 & coop: 74.48\%
+        
+        condo: 25.52\%
+        
+        \\
+        
+        \hline
+        
+        dining\_room\_type & Whether combo, formal or other dining room type & 448 & combo: 53.70\%
+        
+        formal: 34.79\%
+        
+        other: 11.50\%
+        
+        \\
+
+        \hline
+        
+        dogs\_allowed & To identify whether dog is allowed in the apartment & 0 & yes: 24.48\%
+        
+        no: 75.52\%
+        
+        \\
+        \hline
+        
+        fuel\_type & fuel\_type of heating system & 112 & electric: 2.93\%
+        
+        gas: 63.64\%
+        
+        none: 0.14\%
+        
+        oil: 31.35\%
+        
+        other: 1.94\%
+        
+        \\
+        \hline
+        garage\_exists & Whether garage exists or not & 0 & yes: 18.12\%
+        
+        no: 81.88\%
+        
+        \\
+        \hline
+        kitchen\_type & Type of kitchen: combo, eat\_in, efficiency, none & 16 & combo: 18.02\%
+        
+        eat\_in: 42.55\%
+        
+        efficiency: 38.35\%
+        
+        none: 1.08\%
+        
+     \\
+    \hline
+        community\_district
+        \_num & The district number where the apartment is located & 19 & 24: 8.59\%
+        
+        25: 27.86\%
+        
+        26: 16.1\%
+        
+        27: 5.02\%
+        
+        28: 26.37\%
+        
+        29: 3.08\%
+        
+        30: 10.22\%
+        
+        other: 2.76\%
+        
+        \\
+        \hline
+    \end{tabular}
+    \caption{Placeholder caption for a 4-column, 20-row table with one heading.}
+    \label{tab:placeholder_label}
+\end{table}
+
+
+        \begin{table} [H]
+    \centering
+    \begin{tabular}{|p{3.5cm}|p{5.5cm}|p{2cm}|p{4cm}|}
+        \hline
+        Feature Name & Description & Number of Missingness & Summary \\
+\hline
+zip\_code & The ZIP code where the apartment is located & 0 & 
+11004: 1.57\% 
+
+11005: 2.42\% 
+
+11101: 0.31\% 
+
+11102: 0.99\% 
+
+11103: 0.36\% 
+
+11104: 0.58\% 
+
+11105: 0.67\% 
+
+11106: 0.58\% 
+
+11354: 6.33\% 
+
+11355: 5.83\% 
+
+11356: 1.08\% 
+
+11357: 3.95\% 
+
+11358: 0.90\% 
+
+11360: 6.81\% 
+
+11361: 0.90\% 
+
+11362: 3.14\% 
+
+11363: 0.49\% 
+
+11364: 3.50\% 
+
+11365: 0.99\% 
+
+11367: 4.35\% 
+
+11368: 2.64\% 
+
+11369: 0.72\% 
+
+11370: 0.27\% 
+
+11372: 6.28\% 
+
+11373: 3.50\% 
+
+11374: 5.83\% 
+
+11375: 13.45\% 
+
+11377: 1.61\% 
+
+11378: 0.22\% 
+
+11379: 0.54\% 
+
+11385: 0.67\% 
+
+11414: 3.59\% 
+
+11415: 4.44\% 
+
+11417: 0.31\% 
+
+11418: 0.18\% 
+
+11421: 0.63\% 
+
+11422: 0.31\% 
+
+11423: 0.76\% 
+
+11426: 0.90\% 
+
+11427: 1.53\% 
+
+11432: 3.36\% 
+
+11435: 2.20\% 
+
+other: 0.31\% \\
+\hline
+    \end{tabular}
+\end{table}
+
+
+Now, take a look at numeric features.
+
+\begin{table} [H]
+    \centering
+    \begin{tabular}{|p{3.5cm}|p{5.5cm}|p{2cm}|p{4cm}|}
+        \hline
+        Feature Name & Description & Number of Missingness & Summary \\
+        \hline
+        general\_cost & This feature is about charges for maintenance fee for co op and common charge for condo & 100 & Range: [70, 4659]
+        
+        Average: 749.8
+        
+        SD: 397.7021
+        
+        \\
+        \hline
+        parking\_charge & Amount of money to be paid for parking & 1671 & Range: [6, 837]
+        
+        Average: 107.6
+        
+        SD: 70.87827
+        
+        \\
+        \hline
+        total\_taxes & Total taxes for the apartment & 1646 &  Range: [11, 9300]
+        
+        Average: 2226
+        
+        SD: 1850.094
+        
+        \\
+        \hline
+        
+        listing\_price\_to\_
+        
+        nearest\_1000 & Listing price of apartment to nearest 1000 (example, if it is 150, the listing price is \$150,000 & 534 & Range: [65, 1000]
+        
+        Average: 385.6
+        
+        SD: 200.2584
+        
+        \\
+        \hline
+        
+        approx\_year\_built & The approximate year when the apartment is built & 40 & Range: [1893, 2017]
+        
+        Average: 1963
+        
+        SD: 21.07992
+        
+ \\
+ \hline
+        num\_bedrooms & The number of bedrooms in an apartment & 115 & Range: [0, 6]
+        
+        Average: 1.65 (rounded 2)
+        
+        SD: 0.7436145
+        
+         \\
+         \hline
+        num\_floors\_in\_
+        building & The amount of floors in an apartment & 650 & Range: [1, 34]
+        
+Average: 7.79 (rounded 8)
+
+SD: 7.5158
+
+\\
+\hline
+
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{3.5cm}|p{5.5cm}|p{2cm}|p{4cm}|}
+     \hline
+        Feature Name & Description & Number of Missingness & Summary \\
+
+        \hline
+        
+        num\_full\_bathrooms & The amount of full bathrooms which has both toilet and shower) & 0 & Range: [1, 3]
+        
+Average: 1.23 (rounded 1)
+
+SD: 0.4446 
+
+\\
+\hline
+        num\_half\_bathrooms & The number of half bathrooms (toilet only, no shower) & 2058 & Range: [0, 2]
+
+Average: 0.95 (rounded 1)
+
+SD: 0.3023 \\ 
+\hline
+num\_total\_rooms & The total number of rooms in the apartment & 2 & Range: [0, 14]
+
+Average: 4.14 (rounded 4)
+
+SD: 1.3459 \\
+\hline
+
+pct\_tax\_deductibl & The percent of the maintenance cost that is tax deductible & 1754 & Range: [20, 75]
+
+Average: 45.4 
+
+SD: 6.9489 \\
+\hline
+
+sq\_footage & The total square footage of the apartment & 1210 & Range: [100, 6215]
+
+Average: 955.4
+
+SD: 380.8647 \\
+\hline
+
+walk\_score & The walkability score of the apartment's location & 0 & Range: [7, 99]
+
+Average: 83.92 
+
+SD: 14.7473 \\
+
+\hline
+    \end{tabular}
+\end{table}
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Errors and Missingness}
+
+Several features in the dataset contained missing values or inconsistencies that needed to be addressed. For the common\_charges and maintenance\_cost columns, each applies to a different apartment type: common\_charges is used for condos, while maintenance\_cost applies to co-ops. Importantly, only one of these two values is present per row. To consolidate this information and handle the structured missingness, we created a new column called general\_cost, which combines both sources. After this transformation, we dropped the original two columns. We also removed dollar signs (\$) and commas to convert the string values into numeric format. The resulting general\_cost column still had 100 missing values. 
+
+There are also many features that is string and have dollar signs or comma. We remove those characters and convert to numeric. 
+
+For the garage\_exists variable, all missing values were assumed to mean “no garage” and were set accordingly. This assumption is reasonable given the binary nature of the variable and the likely tendency for garage presence to be explicitly recorded when available.
+
+In the kitchen\_type column, there was a single unusual entry labeled "1955", which likely represents a data entry error. We reclassified this entry as "none" to simplify and standardize the categories.
+
+In the dining\_room\_type variable, the categories "dining area" and "none" each appeared only twice. To simplify the factor levels, we combined them into the "other" category.
+
+In the community\_district\_num variable, some districts appeared only once or twice in the dataset. To ensure compatibility with the test set and avoid unseen factor levels during validation, we grouped these rare districts into a single "other" category.
+
+In the zip\_code column, we extracted values from the full\_address\_or\_zip\_code, URL, and url fields to fill in missing zip codes. Since the missing values were often present in one of the other columns, we used them to cross-reference and complete the data. There is an interesting about zip\_code is that if we use as a numeric, the performance metric is a bit better than categorical. 
+
+
+Throughout the dataset, other textual inconsistencies such as typos (e.g., "yes89" in dogs\_allowed, "efficiemcy" in kitchen\_type) were cleaned using manual corrections and pattern collapsing. 
+
+The majority of the features have missingness, and we are going to use missForest to impute those features. However, before we impute, we need to do some preparation. There is a lot of missingness in the response variable sale\_price, and only 528 values are not missing. So, we can only use those 528 data points for training and testing. That said, we can still use all of the data points for imputation purposes. Although we can include all rows in imputation, we cannot include y\_select and y\_test in the imputation step, because it could create correlations between the response and predictors. This would prevent us from getting a proper out-of-sample or honest performance metric. So, we are going to store y\_select and y\_test separately, set those values to NA in the dataset, and then run imputation.
+
+\section{Modeling}
+
+\subsection{Regression Tree Modeling}
+
+We fit one regression tree model using the YARFCART function from the YARF package. One important hyperparameter in regression trees is the nodesize, which controls the minimum number of observations required in a leaf node. The default nodesize is 5. However, we are going to split into train, select and test to find the best nodesize.
+
+To understand the predictive structure of the tree, we visualized the top layers using illustrate\_trees() up to depth 6. This allowed us to inspect the most important early splits in the tree. The feature listing\_price\_to\_nearest\_1000 stood out as especially important, appearing most frequently in the first 6 layers of trees.
+
+We also extracted the top 10 features used most frequently in the first six layers of the tree. These features are:
+\begin{enumerate}
+    \item listing\_price\_to\_nearest\_1000
+    \item total\_taxes
+    \item walk\_score
+    \item general\_cost
+    \item approx\_year\_built
+        \item sq\_footage
+        \item parking\_charges
+        \item community\_district\_num
+    \item fuel\_type\_gas
+    \item num\_bedrooms
+\end{enumerate}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{yarf_mod_tree_1.png}
+    \caption{Regression Tree with 6 depths}
+\end{figure}
+
+\subsection{Linear Modeling}
+
+We fit a linear model using the lm() function in R. Comparing with the most important feature found in the regression tree — listing\_price\_to\_nearest\_1000, we observe that its coefficient in the linear model is not the largest, but it is positive and reasonably large, confirming its strong relationship with sale\_price.
+
+In terms of performance, the linear model achieves an in-sample RMSE of 37356.34 and $R^2$ = 0.9554128, while the out-of-sample RMSE is 72428.53 with $R^2$ = 0.8535482. These results suggest that the model is not overfitting, as the gap between training and testing performance is not extreme. Likewise, the model is not underfitting, given that both $R^2$ values are relatively high. Since the out-of-sample performance remains strong, this indicates a fairly linear relationship between the features and the response. Therefore, we conclude that a linear model is a reasonable and effective choice for prediction in this context, supported by honest performance metrics.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Feature} & \textbf{Coefficient Estimate} \\
+\hline
+(Intercept) & -473888.99 \\
+approx\_year\_built & 196.72 \\
+cats\_allowedyes & 8374.38 \\
+community\_district\_num25 & 12593.04 \\
+community\_district\_num26 & 43658.51 \\
+community\_district\_num27 & 19753.01 \\
+community\_district\_num28 & 40048.01 \\
+community\_district\_num29 & 54724.21 \\
+community\_district\_num30 & -2302.80 \\
+community\_district\_numother & 6592.63 \\
+coop\_condocondo & 43420.97 \\
+dining\_room\_typeformal & 758.51 \\
+dining\_room\_typeother & -10737.73 \\
+dogs\_allowedyes & 25.59 \\
+fuel\_typegas & 40350.29 \\
+fuel\_typenone & 83549.78 \\
+fuel\_typeoil & 35401.43 \\
+fuel\_typeother & 34193.84 \\
+garage\_existsyes & 8384.97 \\
+kitchen\_typeeat\_in & -3355.88 \\
+kitchen\_typeefficiency & -7629.90 \\
+kitchen\_typenone & 35665.53 \\
+num\_bedrooms & 8834.85 \\
+num\_floors\_in\_building & -560.08 \\
+num\_full\_bathrooms & 3853.92 \\
+num\_half\_bathrooms & -20307.49 \\
+num\_total\_rooms & -744.52 \\
+parking\_charges & -9.05 \\
+pct\_tax\_deductibl & 1143.05 \\
+sq\_footage & 14.77 \\
+total\_taxes & -7.07 \\
+walk\_score & -376.27 \\
+listing\_price\_to\_nearest\_1000 & 803.62 \\
+\hline
+\end{tabular}
+\caption{OLS Coefficient Estimates for Full Linear Model}
+\label{tab:ols_full_coeff}
+\end{table}
+
+
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Feature} & \textbf{Coefficient Estimate} \\
+\hline
+general\_cost & 33.49 \\
+zip\_code11005 & 37222.82 \\
+zip\_code11101 & 45647.36 \\
+zip\_code11102 & 110531.55 \\
+zip\_code11104 & -13916.73 \\
+zip\_code11105 & 145567.72 \\
+zip\_code11106 & 54677.04 \\
+zip\_code11354 & 40945.85 \\
+zip\_code11355 & 18712.01 \\
+zip\_code11356 & -18965.67 \\
+zip\_code11357 & 14692.96 \\
+zip\_code11358 & 25425.00 \\
+zip\_code11360 & 20229.15 \\
+zip\_code11361 & 14313.50 \\
+zip\_code11362 & -3468.49 \\
+zip\_code11363 & 24184.85 \\
+zip\_code11364 & -19728.24 \\
+zip\_code11365 & -19334.07 \\
+zip\_code11367 & 31669.53 \\
+zip\_code11368 & -8856.09 \\
+zip\_code11369 & 32552.15 \\
+zip\_code11370 & 44266.56 \\
+zip\_code11372 & 65000.15 \\
+zip\_code11373 & 35227.73 \\
+zip\_code11374 & 20443.64 \\
+zip\_code11375 & 16571.82 \\
+zip\_code11377 & 45986.20 \\
+zip\_code11378 & 45700.63 \\
+zip\_code11379 & 54053.43 \\
+zip\_code11385 & 27447.69 \\
+\hline
+\end{tabular}
+\caption{OLS Coefficient Estimates for Full Linear Model}
+\label{tab:ols_full_coeff}
+\end{table}
+
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Feature} & \textbf{Coefficient Estimate} \\
+\hline
+zip\_code11414 & -33604.31 \\
+zip\_code11415 & -7962.11 \\
+zip\_code11417 & -35778.22 \\
+zip\_code11421 & 14518.13 \\
+zip\_code11422 & -67113.98 \\
+zip\_code11423 & -35747.91 \\
+zip\_code11426 & 2395.70 \\
+zip\_code11427 & -29625.39 \\
+zip\_code11432 & -12512.25 \\
+zip\_code11435 & 377.92 \\
+zip\_codeother & -82447.58 \\
+\hline
+\end{tabular}
+\caption{OLS Coefficient Estimates for Full Linear Model}
+\label{tab:ols_full_coeff}
+\end{table}
+
+\subsection{Random Forest Modeling}
+
+This should be our choice of prediction model because, in terms of bias-variance decomposition, the bootstrap aggregation and the random selection of variables via mtry help reduce variance, while allowing a small nodesize (e.g., 1) keeps the bias low. However, mtry and the number of trees are hyperparameters that must be carefully tuned. The number of trees is relatively straightforward more trees generally reduce variance and stabilize the prediction. On the other hand, mtry needs to be tuned using a validation set or cross-validation; we used a 3-way split and selected the best mtry based on out-of-sample error.
+
+Random forests are considered non-parametric models because they do not assume a fixed functional form; however, they are tunable via hyperparameters like mtry, nodesize, and ntree. By choosing this model, we gain the flexibility to manage variance and bias separately. One drawback in our specific case is that our dataset has relatively small n (sample size) and many features (around 20+), which can make the model prone to overfitting—especially if many features have high-cardinality levels or rare categories. The randomness introduced at each split can also become less effective when a few features dominate in importance, or when others carry little predictive value.
+
+\section{Performance Results}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Model} & \textbf{In-Sample RMSE} & \textbf{In-Sample $R^2$} & \textbf{OOS RMSE} & \textbf{OOS $R^2$} \\
+\hline
+OLS & 37,356.34 & 0.9554 & 72,428.53 & 0.8535 \\
+Regression Tree & 36,517.87 & 0.9574 & 85,425.41 & 0.7963 \\
+Random Forest & 59,284.73 & 0.8877 & 102,175.30 & 0.7085 \\
+\hline
+\end{tabular}
+\caption{In-Sample and Out-of-Sample RMSE and $R^2$ for OLS, Regression Tree, and Random Forest Models}
+\label{tab:model_performance}
+\end{table}
+
+For OLS, we can clearly see that the data has some linearity, which makes it the best model out of the three when looking at out-of-sample performance. The OLS model achieves the lowest OOS RMSE and the highest $R^2$, which suggests that it generalizes better than the others.
+
+The regression tree is our second-best model based on both in-sample and out-of-sample metrics. It captures non-linear structure better than OLS but slightly overfits, as seen from the drop in $R^2$ when moving to test data.
+
+Random forest, which is typically expected to perform well, ended up being the worst performer in our case. As we mentioned before, this is likely due to a few reasons: the small number of training examples, the large number of features, and the added randomness from hyperparameters like mtry. These factors combined may have caused instability and overfitting in the random forest model. If we had more data, we believe that random forest would eventually outperform the others due to its ability to capture complex interactions.
+
+When thinking about extrapolation, OLS has an advantage because it uses a global linear form, so it’s smoother and more stable outside the training domain. The tree models (especially regression tree and random forest), on the other hand, are based on recursive partitioning and may not handle values outside of the training set well. That’s another reason OLS works better here, but this could change as data grows.
+
+The out-of-sample estimates we calculated are honest and valid indicators of future performance. We created a separate test set and never used it during model training or tuning. So the OOS metrics realistically reflect how well each model would perform when making predictions on truly unseen data. 
+
+\section{Discussion}
+
+To summarize, we’ve seen some interesting things throughout building this model. One surprising result was that using zip code as a numeric variable gave us better performance than using it as a categorical variable. Another finding was that using the default 2-way split in random forest worked better than when we used a 3-way split. That said, we had to drop about 1500 rows due to missingness in the response variable, which definitely hurt our training size. If we had more training data, we believe that the random forest model would likely outperform the others.
+
+The overall model performance really came down to how we handled the data and the cleaning process. Speaking of the 3-way split, we made sure to lock y\_select and y\_test before imputation, which gave us honest out-of-sample metrics. It’s also interesting to see that OLS ended up beating both tree-based models, which we didn’t expect at the beginning.
+
+One reason this might have happened is due to missForest. Since it randomly imputes missing values each time, we noticed that our performance metrics changed slightly depending on the run. So, there is some randomness even before modeling begins.
+
+We don’t think this model is production ready yet. There are still things we could tune better, and more importantly, we need more high-quality training data to fully unlock the potential of models like random forest. And no, we don’t think we can beat Zillow right now—the OOS metrics just aren’t strong enough yet.
+
+
+\section*{Code Appendix}
+  \inputminted[bgcolor=lightgray]{r}{./final_project.Rmd}
+
+\end{document}
